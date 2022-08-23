@@ -26,11 +26,11 @@
 
       <h2>WebGL Ejercicio 01 - Triangulos</h2>
 
-      <canvas id="my-canvas" width="900" height="500">
+      <canvas id="my-canvas" width="900" height="900">
         Your browser does not support the HTML5 canvas element.
       </canvas>
 
-      <details>
+      <details open>
         <summary>Imagen Original</summary>
         <img src="ejercicio-triangulos.png" width="900" />
       </details>
@@ -71,6 +71,11 @@
         vertexColorAttribute = null,
         trianglesColorBuffer = null;
 
+			var amarillo = [234/255, 185/255, 42/255],
+					magenta = [252/255, 40/255, 252/255],
+					verde = [73/255, 218/255, 39/255],
+					blanco = [1.0, 1.0, 1.0];
+
       function initWebGL() {
         canvas = document.getElementById("my-canvas");
         try {
@@ -91,7 +96,7 @@
 
       function setupWebGL() {
         //set the clear color
-        gl.clearColor(0.1, 0.1, 0.2, 1.0);
+        gl.clearColor(13/255, 59/255, 251/255, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         gl.viewport(0, 0, canvas.width, canvas.height);
@@ -137,13 +142,45 @@
       function setupBuffers() {
         var data = [
 
-                -0.5,-0.5, 0.0,    // vértice 1, triangulo 1
-                -0.5, 0.5, 0.0,    // vértice 2, triangulo 1
-                0.0,-0.5, 0.0,     // vértice 3, triangulo 1
+                -0.2, 0.4, 0.0,
+                -0.6, 0.0, 0.0,
+                -0.2, 0.0, 0.0,
 
-                0.0, 0.5, 0.0,     // vértice 1, triangulo 2
-                0.5,-0.5, 0.0,     // vértice 2, triangulo 2
-                0.5, 0.5, 0.0      // vértice 3, triangulo 2
+                -0.2, 0.0, 0.0,
+                -0.6, 0.0, 0.0,
+                -0.2,-0.2, 0.0,
+                
+                -0.2,-0.2, 0.0,
+                -0.6, 0.0, 0.0,
+								-0.6,-0.6, 0.0,
+                
+                -0.2,-0.2, 0.0,
+								-0.6,-0.6, 0.0,
+                -0.2,-0.6, 0.0,
+                
+                -0.2,-0.2, 0.0,
+                -0.2,-0.6, 0.0,
+								 0.2,-0.2, 0.0,
+                
+								 0.2,-0.2, 0.0,
+								-0.2,-0.6, 0.0,
+								 0.2,-0.6, 0.0,
+
+								 0.2,-0.6, 0.0,
+								 0.6,-0.6, 0.0,
+								 0.6,-0.2, 0.0,
+
+								 0.2,-0.6, 0.0,
+								 0.6,-0.2, 0.0,
+								 0.2, 0.2, 0.0,
+
+								 0.6,-0.2, 0.0,
+								 0.2, 0.2, 0.0,
+								 0.6, 0.2, 0.0,
+
+								 0.2, 0.2, 0.0,
+								 0.6, 0.2, 0.0,
+								 0.6, 0.6, 0.0,
             ];
             
             trianglesVerticeBuffer = gl.createBuffer();                               // creo el buffer
@@ -151,13 +188,45 @@
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);   // cargo los datos en el buffer 
         
             var color = [   
-                1.0, 0.0, 0.0,      // r,g,b vertice 1
-                1.0, 1.0, 0.0,
-                0.0, 1.0, 0.0,
+                ...amarillo,
+                ...amarillo,
+                ...amarillo,
                 
-                0.0, 1.0, 1.0,
-                0.0, 0.0, 1.0,
-                1.0, 0.0, 1.0
+                ...magenta,
+                ...magenta,
+                ...magenta,
+                
+								...magenta,
+                ...magenta,
+                ...magenta,
+
+								...verde,
+								...verde,
+								...verde,
+								
+								...blanco,
+								...blanco,
+								...blanco,
+								
+								...blanco,
+								...blanco,
+								...blanco,
+
+								...verde,
+								...verde,
+								...verde,
+
+								...magenta,
+                ...magenta,
+                ...magenta,
+
+								...magenta,
+                ...magenta,
+                ...magenta,
+
+								...amarillo,
+                ...amarillo,
+                ...amarillo,
             ];
 
         trianglesColorBuffer = gl.createBuffer();
@@ -174,11 +243,7 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, trianglesVerticeBuffer);
         gl.vertexAttribPointer(
           vertexPositionAttribute,
-          3,
-          gl.FLOAT,
-          false,
-          0,
-          0
+          3, gl.FLOAT, false, 0, 0
         );
 
         vertexColorAttribute = gl.getAttribLocation(glProgram, "aVertexColor");
@@ -186,7 +251,7 @@
         gl.bindBuffer(gl.ARRAY_BUFFER, trianglesColorBuffer);
         gl.vertexAttribPointer(vertexColorAttribute, 3, gl.FLOAT, false, 0, 0);
 
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        gl.drawArrays(gl.TRIANGLES, 0, 3*10);
       }
 
       window.onload = initWebGL;
