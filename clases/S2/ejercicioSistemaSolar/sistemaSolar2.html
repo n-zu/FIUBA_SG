@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <title>Sistema Solar</title>
     <link rel="stylesheet" type="text/css" href="css/global.css"></link>
-    <script src="js/trails.js"></script>   
+    <script src="js/trails.js"></script> 
+    <script src="js/ObjectModel.js"></script>
+    <script src="js/SolarSystem.js"></script>
     <script src="../../../lib/jquery-2.1.4.min.js"></script>    
     <script src="../../../lib/gl-matrix-3.3.0.min.js"></script>    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/101/three.min.js"></script>    
@@ -421,6 +423,8 @@
                 mat4.translate(m,m,[dist_tierra_luna,0,0]); 
             }
 
+            /*
+
             // tierra
             m1=mat4.create(); 
             mv_earth(m1)
@@ -446,8 +450,10 @@
             mat4.rotate(m4,m4,-adv*iss_x_año,[0,0,1]);
             mat4.translate(m4,m4,[dist_tierra_iss,0,0]);             
             mat4.rotate(m4,m4,radians(90),[0,1,0]);
-            setTransform(iss,m4);  
+            setTransform(iss,m4);
+            */
 
+            drawSolarSystem(tiempo);
 
             // *********************************************************************************************
 
