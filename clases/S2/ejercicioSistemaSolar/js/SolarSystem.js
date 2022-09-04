@@ -1,6 +1,6 @@
 let dias_x_año = 360;
 let lunas_x_año = dias_x_año / 30;
-let iss_x_año = dias_x_año / 30;
+let iss_x_año = dias_x_año / 20;
 let dist_sol_tierra = 120;
 let dist_tierra_luna = 60;
 let dist_tierra_iss = 20;
@@ -31,6 +31,7 @@ function drawSolarSystem(_time) {
             Transform.rotate([degrees(-90), [0, 1, 0]]),
             Transform.translate([dist_tierra_iss, 0, 0]),
             Transform.rotate([time*iss_x_año, [0, 0, 1]]),
+            Transform.rotate([-time, [0, 1, 0]]),
           ]
         ),
         new ObjectModel(

@@ -402,57 +402,6 @@
             *********************************************************************************
             */
 
-            let adv = tiempo;
-            let dias_x_año = 360;
-            let lunas_x_año = dias_x_año / 30;
-            let iss_x_año = dias_x_año / 30;
-            let dist_sol_tierra = 120;
-            let dist_tierra_luna = 60;
-            let dist_tierra_iss = 20;
-
-            const radians = (degrees) => degrees * (Math.PI/180);
-
-            const mv_earth = (m) => {
-                mat4.rotate(m,m,adv,vec3.fromValues(0,1,0));
-                mat4.translate(m,m,[dist_sol_tierra,0,0]);  
-                mat4.rotate(m,m,-adv,vec3.fromValues(0,1,0));
-            }
-            const mv_moon = (m) => {
-                mv_earth(m) 
-                mat4.rotate(m,m,-adv*lunas_x_año,vec3.fromValues(0,1,0));
-                mat4.translate(m,m,[dist_tierra_luna,0,0]); 
-            }
-
-            /*
-
-            // tierra
-            m1=mat4.create(); 
-            mv_earth(m1)
-            mat4.rotate(m1,m1,radians(-23),[0,0,1]);
-            mat4.rotate(m1,m1,-adv*dias_x_año,[0,1,0]);
-            setTransform(tierra,m1);
-  
-            // luna
-            m2=mat4.create();      
-            mv_moon(m2) 
-            setTransform(luna,m2);  
-
-            // apollo
-            m3=mat4.create();
-            mv_moon(m3)
-            mat4.rotate(m3,m3,radians(-45),[0,0,1]); 
-            mat4.translate(m3,m3,[0,2.05,0]);
-            setTransform(apollo,m3);
-
-            // iss
-            m4=mat4.create(); 
-            mv_earth(m4)
-            mat4.rotate(m4,m4,-adv*iss_x_año,[0,0,1]);
-            mat4.translate(m4,m4,[dist_tierra_iss,0,0]);             
-            mat4.rotate(m4,m4,radians(90),[0,1,0]);
-            setTransform(iss,m4);
-            */
-
             drawSolarSystem(tiempo);
 
             // *********************************************************************************************
