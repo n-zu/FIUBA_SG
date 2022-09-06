@@ -296,10 +296,10 @@
         function toggleTrails(){
             trailsVisibles=!trailsVisibles;
 
-            trailTierra.visible=trailsVisibles;
-            trailLuna.visible=trailsVisibles;
-            trailIss.visible=trailsVisibles;           
-
+            trail1.setVisible(trailsVisibles);         
+            trail2.setVisible(trailsVisibles);         
+            trail3.setVisible(trailsVisibles);         
+            console.log('trailsVisibles: '+trailsVisibles);
         }
 
         function resetTrails(){

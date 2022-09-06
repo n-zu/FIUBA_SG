@@ -6,6 +6,7 @@ function Trail(maxPoints,initialPos,tone){
 
     var points=[];
     var frame=0;
+    var visible = true;
 
 
 	var segments = maxPoints;
@@ -46,7 +47,7 @@ function Trail(maxPoints,initialPos,tone){
     }
 
     this.pushPosition=function(pos){
-
+        if(!visible) return;
 	    
 	    points.push(pos);
         if (points.length>maxPoints) points.shift();
@@ -77,5 +78,19 @@ function Trail(maxPoints,initialPos,tone){
         frame++;
     }
 
+    this.setVisible=function(v){
+        visible=v;
+        points=[];
+				var att=trailsGeo.getAttribute("position");
+        var att2=trailsGeo.getAttribute("color");
+
+				for (var i=0;i< maxPoints;i++)  {
+					att.setXYZ(i,0,0,0);
+					att2.setXYZ(i,0,0,0);
+				}
+
+				att.needsUpdate=true;
+              att2.needsUpdate=true;
+    }
 
 }
