@@ -29,14 +29,15 @@
 var superficie3D;
 var mallaDeTriangulos;
 
-var filas=4;
-var columnas=4;
+var filas=20;
+var columnas=20;
 
 
 function crearGeometria(){
         
 
-    superficie3D=new Plano(3,3);
+    // superficie3D=new Plano(3,3);
+    superficie3D=new Esfera(1);
     mallaDeTriangulos=generarSuperficie(superficie3D,filas,columnas);
     
 }
@@ -58,6 +59,32 @@ function Plano(ancho,largo){
 
     this.getNormal=function(u,v){
         return [0,1,0];
+    }
+
+    this.getCoordenadasTextura=function(u,v){
+        return [u,v];
+    }
+}
+
+function Esfera(radio){
+
+    this.getPosicion=function(u,v){
+
+        var theta=2*Math.PI*u;
+        var phi=Math.PI*v;
+
+        var x=radio*Math.cos(theta)*Math.sin(phi);
+        var y=radio*Math.cos(phi);
+        var z=radio*Math.sin(theta)*Math.sin(phi);
+
+        return [x,y,z];
+    }
+
+    this.getNormal=function(u,v){
+        var posicion=this.getPosicion(u,v);
+        var normal=vec3.create();
+        vec3.normalize(posicion,normal);
+        return normal;
     }
 
     this.getCoordenadasTextura=function(u,v){
