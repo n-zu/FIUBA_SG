@@ -51,6 +51,11 @@
         var distanciaCamara=3;
         var alturaCamara=2;
         var velocidadAngular=0.15;
+        var forma = "Plano";
+        var shapeControllers = [];
+        var radioEsfera = 2;
+        var anchoPlano = 3;
+        var largoPlano = 3;
         
         var lighting="true";
 
@@ -237,12 +242,39 @@
         }
             
         function initMenu(){
+
             var gui = new dat.GUI();
-            gui.add(window, "distanciaCamara",0.01,5).step(0.01);
-            gui.add(window, "alturaCamara",-4,4).step(0.01);;
-            gui.add(window, "modo",["wireframe","smooth","edges"]);
-            gui.add(window, "velocidadAngular",0, 1).step(0.01);
-            
+
+            var gui_camera = gui.addFolder('Camera')
+            gui_camera.add(window, "distanciaCamara",0.01,5).step(0.01);
+            gui_camera.add(window, "alturaCamara",-4,4).step(0.01);
+            gui_camera.add(window, "modo",["wireframe","smooth","edges"]);
+            gui_camera.add(window, "velocidadAngular",0, 1).step(0.01);
+
+            var gui_grid = gui.addFolder('Grid')
+            gui_grid.add(window, "filas",1,50).step(1).onChange(crearGeometria);
+            gui_grid.add(window, "columnas",1,50).step(1).onChange(crearGeometria);
+
+            var gui_shape = gui.addFolder('Shape')
+            gui_shape.add(window, "forma",["Plano","Esfera","TuboSenoidal"])
+            .onChange((shape)=>{
+                crearGeometria();
+                shapeControllers.forEach((c)=>{c.remove()});
+                shapeControllers = [];
+                switch(shape){
+                    case "Plano":
+                        shapeControllers.push(gui_shape.add(window, "anchoPlano",1,5).step(1));
+                        shapeControllers.push(gui_shape.add(window, "largoPlano",1,5).step(1));
+                        break;
+                    case "Esfera":
+                        shapeControllers.push(gui_shape.add(window, "radioEsfera",1,5).step(1));
+                        break;
+                }
+                shapeControllers.forEach((c)=>{c.onChange(crearGeometria)});
+            });
+            shapeControllers.push(gui_shape.add(window, "anchoPlano",1,5).step(1));
+            shapeControllers.push(gui_shape.add(window, "largoPlano",1,5).step(1));
+            shapeControllers.forEach((c)=>{c.onChange(crearGeometria)});
             
         }
 

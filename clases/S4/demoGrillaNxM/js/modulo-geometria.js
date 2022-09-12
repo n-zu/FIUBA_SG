@@ -36,8 +36,11 @@ var columnas=20;
 function crearGeometria(){
         
 
-    // superficie3D=new Plano(3,3);
-    superficie3D=new Esfera(1);
+    if( forma == "Esfera" )
+        superficie3D=new Esfera(radioEsfera??1);
+    else
+        superficie3D=new Plano(anchoPlano??1,largoPlano??1);
+
     mallaDeTriangulos=generarSuperficie(superficie3D,filas,columnas);
     
 }
@@ -70,14 +73,17 @@ function Esfera(radio){
 
     this.getPosicion=function(u,v){
 
-        var theta=2*Math.PI*u;
-        var phi=Math.PI*v;
+        var mat = mat4.create();
 
-        var x=radio*Math.cos(theta)*Math.sin(phi);
-        var y=radio*Math.cos(phi);
-        var z=radio*Math.sin(theta)*Math.sin(phi);
+        
+        mat4.rotate(mat,mat,2*Math.PI*u,[0,1,0]);
+        mat4.rotate(mat,mat,Math.PI*(0.5-v),[0,0,1]);
+        mat4.translate(mat, mat, [radio, 0, 0]);
 
-        return [x,y,z];
+        var vec = vec3.create();
+        mat4.getTranslation(vec, mat)
+
+        return vec;
     }
 
     this.getNormal=function(u,v){
