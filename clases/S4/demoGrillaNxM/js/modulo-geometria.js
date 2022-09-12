@@ -29,8 +29,8 @@
 var superficie3D;
 var mallaDeTriangulos;
 
-var filas=2;
-var columnas=2;
+var filas=4;
+var columnas=4;
 
 
 function crearGeometria(){
@@ -107,10 +107,10 @@ function generarSuperficie(superficie,filas,columnas){
     const getN = (i,j) => j+(columnas+1)*i;
 
     for (i=0; i < filas; i++) {
-        for (j=0; j < columnas; j++) {
-            indexBuffer.push( getN(i,j), getN(i+1,j), getN(i+1,j+1) );
-            indexBuffer.push( getN(i,j), getN(i,j+1), getN(i+1,j+1) );
+        for (j=0; j <= columnas; j++) {
+            indexBuffer.push( getN(i,j), getN(i+1,j) );
         }
+        indexBuffer.push( getN(i+1,columnas), getN(i+1,0) ); // No es necesario en la ultima fila
     }
 
     // Creación e Inicialización de los buffers
@@ -168,7 +168,7 @@ function dibujarMalla(mallaDeTriangulos){
         /*
             Aqui es necesario modificar la primitiva por triangle_strip
         */
-        gl.drawElements(gl.TRIANGLES, mallaDeTriangulos.webgl_index_buffer.numItems, gl.UNSIGNED_SHORT, 0);
+        gl.drawElements(gl.TRIANGLE_STRIP, mallaDeTriangulos.webgl_index_buffer.numItems, gl.UNSIGNED_SHORT, 0);
     }
     
     if (modo!="smooth") {
