@@ -29,8 +29,8 @@
 var superficie3D;
 var mallaDeTriangulos;
 
-var filas=1;
-var columnas=1;
+var filas=2;
+var columnas=2;
 
 
 function crearGeometria(){
@@ -102,15 +102,14 @@ function generarSuperficie(superficie,filas,columnas){
 
     // Buffer de indices de los triángulos
     
-    //indexBuffer=[];  
-    indexBuffer=[0,1,2,2,1,3]; // Estos valores iniciales harcodeados solo dibujan 2 triangulos, REMOVER ESTA LINEA!
+    indexBuffer=[];  
+
+    const getN = (i,j) => j+(columnas+1)*i;
 
     for (i=0; i < filas; i++) {
         for (j=0; j < columnas; j++) {
-
-            // completar la lógica necesaria para llenar el indexbuffer en funcion de filas y columnas
-            // teniendo en cuenta que se va a dibujar todo el buffer con la primitiva "triangle_strip" 
-            
+            indexBuffer.push( getN(i,j), getN(i+1,j), getN(i+1,j+1) );
+            indexBuffer.push( getN(i,j), getN(i,j+1), getN(i+1,j+1) );
         }
     }
 
