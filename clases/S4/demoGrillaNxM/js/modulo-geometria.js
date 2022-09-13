@@ -131,7 +131,7 @@ function TuboSenoidal(amplitud, longitud, radio, altura){
         var mat = mat4.create();
 
         // TODO: Verificar si esta bien
-        let x = Math.sin(v*2*Math.PI/longitud);
+        let x = Math.abs(Math.sin(v*2*Math.PI/longitud));
         let y = Math.cos(v*2*Math.PI/longitud);
         
         mat4.rotate(mat,mat,2*Math.PI*u,[0,1,0]);
