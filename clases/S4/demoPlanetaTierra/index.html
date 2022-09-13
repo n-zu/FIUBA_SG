@@ -32,10 +32,11 @@
     
     <script>
 
-        var vertexShaderFile="vertex-shader.glsl";
-        var modo="smooth"; // wireframe, smooth, edges
+        var vertexShaderFile="vertex-shader-earth.glsl";
+        var modo="edges"; // wireframe, smooth, edges
         var shaderProgram;
         var time=0;
+        var gui = null;
 
         var gl;
         var mat4=glMatrix.mat4;
@@ -401,13 +402,17 @@
         }
             
         function initMenu(){
-            var gui = new dat.GUI();
+            if( gui != null ) return;
+            gui = new dat.GUI();
             gui.add(window, "distanciaCamara",0.01,5).step(0.01);
             gui.add(window, "alturaCamara",-2,2).step(0.01);;
             gui.add(window, "modo",["wireframe","smooth","edges"]);
             gui.add(window, "velocidadAngular",0, 1).step(0.01);
-            
-            
+            /*gui.add(window, "vertexShaderFile",["vertex-shader.glsl","vertex-shader-earth.glsl"])
+            .onChange(function(value){
+                loadShaders();
+            });*/
+               
         }
 
         function webGLStart() {
