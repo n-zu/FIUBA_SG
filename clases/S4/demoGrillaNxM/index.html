@@ -51,11 +51,7 @@
         var distanciaCamara=3;
         var alturaCamara=2;
         var velocidadAngular=0.15;
-        var forma = "Plano";
         var shapeControllers = [];
-        var radioEsfera = 2;
-        var anchoPlano = 3;
-        var largoPlano = 3;
         
         var lighting="true";
 
@@ -269,11 +265,19 @@
                     case "Esfera":
                         shapeControllers.push(gui_shape.add(window, "radioEsfera",1,5).step(1));
                         break;
+                    case "TuboSenoidal":
+                        shapeControllers.push(gui_shape.add(window, "ampTubo",0.05,1).step(0.05));
+                        shapeControllers.push(gui_shape.add(window, "longTubo",0.1,2).step(0.1));
+                        shapeControllers.push(gui_shape.add(window, "radioTubo",1,5).step(1));
+                        shapeControllers.push(gui_shape.add(window, "alturaTubo",1,5).step(1));
+                        break;
                 }
                 shapeControllers.forEach((c)=>{c.onChange(crearGeometria)});
             });
-            shapeControllers.push(gui_shape.add(window, "anchoPlano",1,5).step(1));
-            shapeControllers.push(gui_shape.add(window, "largoPlano",1,5).step(1));
+            shapeControllers.push(gui_shape.add(window, "ampTubo",0.01,0.5).step(0.01));
+            shapeControllers.push(gui_shape.add(window, "longTubo",0.01,2).step(0.01));
+            shapeControllers.push(gui_shape.add(window, "radioTubo",1,5).step(1));
+            shapeControllers.push(gui_shape.add(window, "alturaTubo",1,5).step(1));
             shapeControllers.forEach((c)=>{c.onChange(crearGeometria)});
             
         }

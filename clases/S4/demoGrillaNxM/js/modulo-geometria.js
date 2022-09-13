@@ -32,12 +32,23 @@ var mallaDeTriangulos;
 var filas=20;
 var columnas=20;
 
+var forma = "TuboSenoidal";
+var radioEsfera = 2;
+var anchoPlano = 3;
+var largoPlano = 3;
+var ampTubo = 0.1;
+var longTubo = 0.2;
+var radioTubo=1;
+var alturaTubo=3;
+
 
 function crearGeometria(){
         
 
     if( forma == "Esfera" )
         superficie3D=new Esfera(radioEsfera??1);
+    else if( forma == "TuboSenoidal" )
+        superficie3D=new TuboSenoidal(ampTubo,longTubo,radioTubo,alturaTubo);
     else
         superficie3D=new Plano(anchoPlano??1,largoPlano??1);
 
@@ -98,7 +109,44 @@ function Esfera(radio){
     }
 }
 
+function TuboSenoidal(amplitud, longitud, radio, altura){
 
+    this.getPosicion=function(u,v){
+
+        var mat = mat4.create();
+        
+        let x = radio + amplitud * Math.sin(v*2*Math.PI/longitud);
+        let y = (0.5-v)*altura;
+        
+        mat4.rotate(mat,mat,2*Math.PI*u,[0,1,0]);
+        mat4.translate(mat, mat, [x, y, 0]);
+
+        var vec = vec3.create();
+        mat4.getTranslation(vec, mat)
+
+        return vec;
+    }
+
+    this.getNormal=function(u,v){
+        var mat = mat4.create();
+
+        // TODO: Verificar si esta bien
+        let x = Math.sin(v*2*Math.PI/longitud);
+        let y = Math.cos(v*2*Math.PI/longitud);
+        
+        mat4.rotate(mat,mat,2*Math.PI*u,[0,1,0]);
+        mat4.translate(mat, mat, [x, y, 0]);
+
+        var vec = vec3.create();
+        mat4.getTranslation(vec, mat)
+
+        return vec;
+    }
+
+    this.getCoordenadasTextura=function(u,v){
+        return [u,v];
+    }
+}
 
 
 function generarSuperficie(superficie,filas,columnas){
