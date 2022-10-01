@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Demo dat gui</title>
+
+    <style>
+      * {
+        font-family: Arial;
+      }
+
+      body {
+        font-size: 120%;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h5>Libreria Dat.gui</h5>
+    <a href="https://github.com/dataarts/dat.gui"
+      >https://github.com/dataarts/dat.gui</a
+    >
+
+    <script src="../../lib/dat.gui.min.js"></script>
+    <script>
+      var app = {
+        alturaMaxima: 10,
+        reiniciar: function () {
+          alert("apreto reiniciar");
+        },
+        detener: function () {
+          alert("apreto detener");
+        },
+        modo: "random",
+        ancho: 0,
+        umbral: 100,
+        samples: 2,
+      };
+
+      function dummy() {
+        console.log("dummy function called");
+      }
+
+      var cantidadTotal = 5;
+
+      function GUI() {
+        // creamos el menu
+
+        var gui = new dat.GUI();
+
+        gui.add(window, "cantidadTotal", 0, 10);
+
+        // definimos una carpeta comandos en la variable f1
+        var f1 = gui.addFolder("Comandos");
+
+        //el metodo add recibe un objeto y el nombre del atributo o funcion en forma de STRING
+        f1.add(app, "reiniciar").name("Reiniciar");
+        f1.add(app, "detener").name("detener");
+
+        // si se desea invocar a una funcion o una variable global, se pasa el parametro window como primer argumento
+        f1.add(window, "dummy").name("detener");
+
+        f1.open(); // hace que la carpeta f1 inicie abierta
+
+        var f2 = gui.addFolder("Parametros generales");
+
+        f2.add(app, "alturaMaxima", 1.0, 60.0).name("altura maxima").step(1);
+        f2.add(app, "ancho", 4, 25).name("Ancho");
+
+        f2.add(app, "modo", ["random", "secuencial"]).name("modo");
+
+        var f3 = gui.addFolder("Parametros Especiales ");
+        f3.add(app, "umbral", 0.0, 200.0).name("umbral");
+        f3.add(app, "samples", 0, 30)
+          .name("samples")
+          .onChange(function (v) {
+            console.log(" cambio el valor de app.samples a " + v);
+          });
+
+        f2.open();
+        f3.open();
+      }
+
+      GUI();
+    </script>
+  </body>
+</html>

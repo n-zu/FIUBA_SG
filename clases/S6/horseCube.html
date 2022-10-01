@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+
+    <style>
+
+    body{
+      background-color: grey;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    </style>
+</head>
+<body>
+
+<div id="container">
+
+</div>
+
+<script type="x-shader/x-vertex" id="vertex-Shader">
+
+
+    varying vec2 vUv;
+    varying vec3 vPosModel;    
+    varying vec3 vPosWorld; 
+
+    
+    uniform float t;        // tiempo en segundos
+    uniform float frame;    // numero de frame (60 frames x segundo)
+     
+
+    void main() {
+
+       vec4 aux = vec4(position,1.0);       
+       vPosWorld = (modelMatrix * vec4(aux.xyz, 1.0 )).xyz;
+
+       vec2 auxUv=uv;
+
+       /*
+            Objetivo
+            --------
+            Aplicar modificaciones a auxUV para que se reproduzcan los 16 cuadros de animacion 
+            cubriendo cada cara completa del cubo;            
+
+            Las variables t y frame son dependientes del tiempo.
+            
+            Suegerencias:
+            1) Verificar que efecto tiene multiplicar auxUV por un factor de escala
+            2) Verificar que efecto tiene sumar o restar un delta a auxUV.x o auxUV.y
+            3) Pensar en que modificaciones deben hacerse para que mostrar un cuadro especifico en las caras del cubo.
+            4) Incluir la variable tiempo
+
+            tip: las funciones floor() y mod() pueden ser de utilizada
+
+       */
+
+       vUv = auxUv;
+       gl_Position = projectionMatrix * modelViewMatrix * aux;
+       
+    }
+
+</script>
+
+
+
+
+
+<script type="x-shader/x-fragment" id="fragment-Shader">
+
+    precision highp float;
+
+    uniform sampler2D textura;
+
+    varying vec2 vUv;
+    varying vec3 vPosModel;    
+    varying vec3 vPosWorld;   
+
+   uniform float t;
+
+
+    void main() {
+
+       vec4 color = vec4(1.0,0.0,0.0, 1.0);      
+    
+       vec4 texColor=texture2D(textura, vUv); 
+        
+        color.x=texColor.x;
+        color.y=texColor.y;
+        color.z=texColor.z;
+
+
+       gl_FragColor = color;
+
+    }
+
+</script>
+
+<script src="js/three.min.js"></script>
+<script src="js/jquery-1.9.1.js"></script>
+<script src="js/controls/OrbitControls.js"></script>
+
+<script>
+
+    var scene, camera, renderer;
+    
+    var tex=THREE.ImageUtils.loadTexture( "img/horse.jpg");
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+
+    var attributes = {
+
+    };
+
+    var uniforms = {
+
+        t: {
+            type: 'f', // a float
+            value: 0
+        },    
+        frame: {
+            type: 'f', // a float
+            value: 0
+        },              
+        textura: { 
+          type: "t", 
+          value:tex
+        }
+    };
+
+
+    
+    var shaderMaterial = new THREE.ShaderMaterial({
+        attributes:     attributes,
+        uniforms:       uniforms,
+        vertexShader:   $('#vertex-Shader').text(),
+        fragmentShader: $('#fragment-Shader').text(),
+    });
+
+
+
+
+   function configurarEcena() {
+
+       var RENDER_WIDTH = 1200, RENDER_HEIGHT = 900;
+
+       scene = new THREE.Scene();
+       camera = new THREE.PerspectiveCamera(75, RENDER_WIDTH / RENDER_HEIGHT, 0.1, 1000);
+       camera.position.set(5, 5, 5);       
+
+       renderer = new THREE.WebGLRenderer({preserveDrawingBuffer: true, autoClear: false});
+       renderer.setSize(RENDER_WIDTH, RENDER_HEIGHT);
+       renderer.setClearColor(0xffffff, 1);
+
+       var container = document.getElementById('container'); //esto vincula Three.js con el Canvas
+       container.appendChild(renderer.domElement);
+       controls = new THREE.OrbitControls(camera, container);
+
+       controls.target.x = 0;
+       controls.target.y = 0;
+       controls.target.z = 0;
+
+   }
+
+   function agregarLuces()
+   {
+       var ambientLight = new THREE.AmbientLight( 0x404040 );
+       scene.add( ambientLight );
+
+
+       var pointLight = new THREE.PointLight( 0xffffff, 1, 1000 ); // definimos una fuente de Luz puntual de color blanco
+       pointLight.position.set( 200, 500, 200 ); // definimos su posicion
+       scene.add( pointLight ); // agregamos la luz a la escena
+
+       var pointLight = new THREE.PointLight( 0xffffff, 1, 1000 );
+       pointLight.position.set( -500, 500, 0 );
+       scene.add( pointLight );
+
+       var pointLight = new THREE.PointLight( 0xffffff, 1, 1000 );
+       pointLight.position.set( -200, 500, 200 );
+       scene.add( pointLight );
+
+
+   }
+   var modelo;
+
+
+    var frame=0;
+
+    function render() {
+        controls.update();
+        requestAnimationFrame(render);
+       
+        uniforms.t.value += 1/60;      
+        uniforms.frame.value += 1;
+        renderer.render(scene, camera,false,false);
+        frame++;
+    };
+
+    configurarEcena();
+    agregarLuces();
+
+    var geometry = new THREE.BoxGeometry( 5, 5, 5 );
+    var material = new THREE.MeshBasicMaterial( {color: 0x00ff00} );
+    var cube = new THREE.Mesh( geometry, shaderMaterial );
+    //cube.position.y=4;
+    scene.add( cube );
+    
+
+    var size = 10;
+    var step = 4;
+
+    var gridHelper = new THREE.GridHelper( size, step );
+    //scene.add( gridHelper );
+
+    render();
+
+</script>
+
+
+
+
+</body>
+</html>

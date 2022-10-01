@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Texturas</title>
+    <style>
+      body {
+        background-color: grey;
+      }
+      canvas {
+        background-color: white;
+      }
+      textarea {
+        background-color: black;
+        foreground-color: white;
+      }
+    </style>
+  </head>
+
+  <body>
+    <canvas id="my-canvas" width="1000" height="800">
+      Your browser does not support the HTML5 canvas element.
+    </canvas>
+
+    <!-- ************       vertex shader        ***************** !-->
+
+    <script id="shader-vs" type="x-shader/x-vertex">
+      precision mediump float;
+               attribute vec3 aVertexPosition;
+               attribute vec2 aVertexUv;
+
+               varying highp vec2 vUv;
+               void main(void) {
+                   gl_Position = vec4(aVertexPosition, 1.0);
+                   vUv = aVertexUv;
+               }
+    </script>
+
+    <!-- ************       fragment shader       **************** !-->
+
+    <script id="shader-fs" type="x-shader/x-fragment">
+      precision mediump float;
+               varying highp vec2 vUv;
+      uniform sampler2D uSampler;
+
+               void main(void) {
+         vec4 textureColor = texture2D(uSampler,vUv);
+                  gl_FragColor = vec4(textureColor.xyz,1.0);
+               }
+    </script>
+
+    <script>
+      var gl = null,
+        canvas = null,
+        glProgram = null,
+        fragmentShader = null,
+        vertexShader = null;
+
+      var vertexPositionAttribute = null,
+        trianglesVerticeBuffer = null,
+        vertexUvAttribute = null,
+        trianglesUvBuffer = null;
+
+      var texture = null;
+
+      function initFase1() {
+        canvas = document.getElementById("my-canvas");
+        try {
+          gl =
+            canvas.getContext("webgl") ||
+            canvas.getContext("experimental-webgl");
+        } catch (e) {
+          alert("Error al obtener el contexto");
+        }
+
+        if (gl) {
+          initTexture("img/uv.jpg");
+        } else {
+          alert("Error: Your browser does not appear to support WebGL.");
+        }
+      }
+
+      function initTexture(file) {
+        texture = gl.createTexture();
+        texture.image = new Image();
+
+        texture.image.onload = function () {
+          gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); // invierto el ejeY
+          gl.bindTexture(gl.TEXTURE_2D, texture); // activo la textura
+
+          gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            texture.image
+          ); // cargo el bitmap en la GPU
+
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); // selecciono filtro de magnificacion
+          gl.texParameteri(
+            gl.TEXTURE_2D,
+            gl.TEXTURE_MIN_FILTER,
+            gl.LINEAR_MIPMAP_NEAREST
+          ); // selecciono filtro de minificacion
+
+          gl.generateMipmap(gl.TEXTURE_2D); // genero los mipmaps
+          gl.bindTexture(gl.TEXTURE_2D, null);
+
+          initFase2();
+        };
+        texture.image.src = file;
+      }
+
+      function initFase2() {
+        setupWebGL();
+        initShaders();
+        setupBuffers();
+        drawScene();
+      }
+
+      function setupWebGL() {
+        //set the clear color
+        gl.clearColor(0.1, 0.1, 0.2, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+
+      function initShaders() {
+        //get shader source
+        var fs_source = document.getElementById("shader-fs").innerHTML,
+          vs_source = document.getElementById("shader-vs").innerHTML;
+
+        //compile shaders
+        vertexShader = makeShader(vs_source, gl.VERTEX_SHADER);
+        fragmentShader = makeShader(fs_source, gl.FRAGMENT_SHADER);
+
+        //create program
+        glProgram = gl.createProgram();
+
+        //attach and link shaders to the program
+        gl.attachShader(glProgram, vertexShader);
+        gl.attachShader(glProgram, fragmentShader);
+        gl.linkProgram(glProgram);
+
+        if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS)) {
+          alert("Unable to initialize the shader program.");
+        }
+
+        //use program
+        gl.useProgram(glProgram);
+
+        glProgram.samplerUniform = gl.getUniformLocation(glProgram, "uSampler");
+      }
+
+      function makeShader(src, type) {
+        //compile the vertex shader
+        var shader = gl.createShader(type);
+        gl.shaderSource(shader, src);
+        gl.compileShader(shader);
+
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          alert("Error compiling shader: " + gl.getShaderInfoLog(shader));
+        }
+        return shader;
+      }
+
+      function setupBuffers() {
+        var data = [
+          -0.8,
+          -0.8,
+          0.0, // vertice 1, triangulo 1
+          -0.8,
+          0.8,
+          0.0, // vertice 2, triangulo 1
+          0.8,
+          -0.8,
+          0.0, // vertice 3, triangulo 1
+
+          -0.8,
+          0.8,
+          0.0, // vertice 1, triangulo 2
+          0.8,
+          -0.8,
+          0.0, // vertice 2, triangulo 2
+          0.8,
+          0.8,
+          0.0, // vertice 3, triangulo 2
+        ];
+
+        trianglesVerticeBuffer = gl.createBuffer(); // creo el buffer
+        gl.bindBuffer(gl.ARRAY_BUFFER, trianglesVerticeBuffer); // activo el buffer
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW); // cargo los datos en el buffer
+
+        /*
+					Ejercicios
+					
+					1) definir las coordenadas UV, para mapear los rangos x:[0.0 a 0.4] y:[0.0 a 0.2] en el rectangulo
+					2) definir las coordenadas UV, para que la textura se repita 3 veces en el eje horizontal y 2 en el vertical
+					3) definir las coordenadas UV, para que la numeraci�n horizontal quede invertida (desde 1.0 a 0.0 de izquierda a derecha)
+					4) definir las coordenadas UV, para que el pixel correspondiente a (0,0) impreso en la imagen este en el centro del rectangulo;
+				
+				*/
+
+        var uv = [
+          0.0, 0.0, 0.0, 1.0, 1.0, 0.0,
+
+          0.0, 1.0, 1.0, 0.0, 1.0, 1.0,
+        ];
+
+        trianglesUvBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, trianglesUvBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uv), gl.STATIC_DRAW);
+      }
+
+      function drawScene() {
+        vertexPositionAttribute = gl.getAttribLocation(
+          glProgram,
+          "aVertexPosition"
+        );
+        gl.enableVertexAttribArray(vertexPositionAttribute);
+        gl.bindBuffer(gl.ARRAY_BUFFER, trianglesVerticeBuffer);
+        gl.vertexAttribPointer(
+          vertexPositionAttribute,
+          3,
+          gl.FLOAT,
+          false,
+          0,
+          0
+        );
+
+        vertexUvAttribute = gl.getAttribLocation(glProgram, "aVertexUv");
+        gl.enableVertexAttribArray(vertexUvAttribute);
+        gl.bindBuffer(gl.ARRAY_BUFFER, trianglesUvBuffer);
+        gl.vertexAttribPointer(vertexUvAttribute, 2, gl.FLOAT, false, 0, 0);
+
+        // https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/activeTexture
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.uniform1i(glProgram.samplerUniform, 0);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+      }
+
+      window.onload = function () {
+        initFase1();
+      };
+    </script>
+  </body>
+</html>
