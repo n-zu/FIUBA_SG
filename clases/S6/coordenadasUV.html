@@ -4,14 +4,7 @@
     <title>Texturas</title>
     <style>
       body {
-        background-color: grey;
-      }
-      canvas {
-        background-color: white;
-      }
-      textarea {
-        background-color: black;
-        foreground-color: white;
+        background-color: #000;
       }
     </style>
   </head>
@@ -102,6 +95,17 @@
             gl.TEXTURE_MIN_FILTER,
             gl.LINEAR_MIPMAP_NEAREST
           ); // selecciono filtro de minificacion
+
+          gl.texParameteri(
+            gl.TEXTURE_2D,
+            gl.TEXTURE_WRAP_S,
+            gl.MIRRORED_REPEAT
+          );
+          gl.texParameteri(
+            gl.TEXTURE_2D,
+            gl.TEXTURE_WRAP_T,
+            gl.MIRRORED_REPEAT
+          );
 
           gl.generateMipmap(gl.TEXTURE_2D); // genero los mipmaps
           gl.bindTexture(gl.TEXTURE_2D, null);
@@ -202,10 +206,63 @@
 				
 				*/
 
-        var uv = [
-          0.0, 0.0, 0.0, 1.0, 1.0, 0.0,
+        let uv_0 = {
+          x0: 0.0,
+          x1: 1.0,
+          y0: 0.0,
+          y1: 1.0,
+        };
 
-          0.0, 1.0, 1.0, 0.0, 1.0, 1.0,
+        let uv_1 = {
+          x0: 0.0,
+          x1: 1.0 * 0.4,
+          y0: 0.0,
+          y1: 1.0 * 0.2,
+        };
+
+        let uv_2 = {
+          x0: 0.0,
+          x1: 1.0 * 3,
+          y0: 0.0,
+          y1: 1.0 * 2,
+        };
+
+        let uv_3 = {
+          x0: 1.0,
+          x1: 0.0,
+          y0: 0.0,
+          y1: 1.0,
+        };
+
+        let uv_4 = {
+          x0: 0.0 - 0.5,
+          x1: 1.0 - 0.5,
+          y0: 0.0 + 0.5,
+          y1: 1.0 + 0.5,
+        };
+
+        let uv_5 = {
+          x0: -1,
+          x1: 1,
+          y0: 0,
+          y1: 2,
+        };
+
+        let _uv = uv_5;
+
+        var uv = [
+          _uv.x0,
+          _uv.y0,
+          _uv.x0,
+          _uv.y1,
+          _uv.x1,
+          _uv.y0,
+          _uv.x0,
+          _uv.y1,
+          _uv.x1,
+          _uv.y0,
+          _uv.x1,
+          _uv.y1,
         ];
 
         trianglesUvBuffer = gl.createBuffer();
