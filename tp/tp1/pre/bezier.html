@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <canvas
+      id="myCanvas"
+      width="800"
+      height="600"
+      style="border: 3px solid #d3d3d3"
+    >
+      Your browser does not support the HTML5 canvas tag.
+    </canvas>
+
+    <script src="../../../lib/gl-matrix-3.3.0.min.js"></script>
+    <script src="bz-spline.js"></script>
+
+    <script>
+      "use strict";
+
+      function dibujarCurvaCubica(puntosDeControl, dibujarGrafo) {
+        ctx.clearRect(0, 0, 1000, 1000);
+        drawSegment(ctx, puntosDeControl, true);
+      }
+
+      function dibujarVector(x1, y1, x2, y2, color) {
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 + x2, y1 + y2);
+        ctx.strokeStyle = color;
+        ctx.stroke();
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const puntos = puntosDeControlCubica;
+
+        dibujarCurvaCubica(puntos, true);
+
+        const { p: punto, t, n } = segmentPoint(currentU, puntos);
+
+        // dibujar punto de la curva en verde
+        currentU += 0.002;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(punto[0], punto[1], 10, 0, 2 * Math.PI);
+        ctx.strokeStyle = "#00F";
+        ctx.stroke();
+
+        dibujarVector(punto[0], punto[1], t[0] * 50, t[1] * 50, "#F00");
+        dibujarVector(punto[0], punto[1], n[0] * 50, n[1] * 50, "#0F0");
+
+        if (currentU > 1) currentU = 0;
+      }
+
+      var puntosDeControlCubica = [
+        [100, 450, 0],
+        [200, 100, 0],
+        [600, 100, 0],
+        [700, 450, 0],
+      ];
+
+      var currentU = 0;
+
+      var c = document.getElementById("myCanvas");
+      var ctx = c.getContext("2d");
+
+      animate();
+    </script>
+  </body>
+</html>
