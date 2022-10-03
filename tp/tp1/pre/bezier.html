@@ -28,7 +28,7 @@
         requestAnimationFrame(animate);
 
         ctx.clearRect(0, 0, 1000, 1000);
-        spline.draw(ctx, true, 0.2);
+        spline.canvasDraw(ctx, true, 0.2);
 
         const { p: punto, t, n } = spline.point(currentU);
 

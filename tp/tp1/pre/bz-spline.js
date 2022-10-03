@@ -17,6 +17,9 @@ const debug = true;
 const convexity = 1; // 1: Convex, -1: Concave
 const n_delta = 0.01;
 
+// Util
+const arrayOf = (n) => [...Array(n).keys()];
+
 class Segment {
   constructor(controlPoints) {
     this.controlPoints = controlPoints;
@@ -82,7 +85,7 @@ class Segment {
     return { p, t: tangent, n: normal, b: bi_normal };
   }
 
-  draw(
+  canvasDraw(
     ctx,
     showControlQuad = false,
     vectorDelta = undefined,
@@ -169,17 +172,36 @@ class Spline {
       s++;
     }
 
+    if (s >= this.segNum) return [this.segNum - 1, 1];
+
     return [s, u / this.lengths[s]];
   }
 
   point(u) {
+    if (u < 0) u = 0;
+    if (u > 1) u = 1;
+
     const [s, su] = this.mapU(u);
     return this.segment(s).point(su);
   }
 
-  draw(ctx, showControlQuad = false, vectorDelta) {
+  canvasDraw(ctx, showControlQuad = false, vectorDelta) {
     for (let s = 0; s < this.segNum; s++) {
-      this.segment(s).draw(ctx, showControlQuad, vectorDelta);
+      this.segment(s).canvasDraw(ctx, showControlQuad, vectorDelta);
     }
+  }
+
+  webglDraw(wgl, delta = 0.01) {
+    let points = [];
+    let normals = [];
+
+    for (let u = 0; u <= 1.001; u = u + delta) {
+      const { p, n } = this.point(u);
+      points.push(...p);
+      normals.push(...n);
+    }
+    const idx = arrayOf(points.length / 3);
+
+    wgl.draw(points, normals, idx, wgl.gl.LINE_STRIP);
   }
 }
