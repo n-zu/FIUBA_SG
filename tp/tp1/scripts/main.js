@@ -43,12 +43,12 @@ const animationStep = (t) => {
     tf < n / 2
       ? min_z * (1 - tf / (n / 2)) + max_z * (tf / (n / 2))
       : max_z * (1 - (tf - n / 2) / (n / 2)) + min_z * ((tf - n / 2) / (n / 2));
-  console.log("z", z);
 
-  wgl.clear();
-  drawPlane(-1);
-  drawPlane(z);
-  drawCurve(-1, z);
+  //wgl.clear();
+  drawPlane(-1.5);
+  drawCurve((z - 1) / 2, z * 2);
+  drawCurve((z - 1) / 2 + 0.1, z * 2 + 0.2);
+  drawCurve((z - 1) / 2 + 0.2, z * 2 + 0.4);
   setTimeout(() => animationStep(t + 100), 100);
 };
 
