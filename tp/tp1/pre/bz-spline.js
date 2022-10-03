@@ -82,7 +82,13 @@ class Segment {
     return { p, t: tangent, n: normal, b: bi_normal };
   }
 
-  draw(ctx, showControlQuad = false, delta = 0.01, lineWidth = 2) {
+  draw(
+    ctx,
+    showControlQuad = false,
+    vectorDelta = undefined,
+    delta = 0.01,
+    lineWidth = 2
+  ) {
     const [p0, p1, p2, p3] = this.controlPoints;
     ctx.lineWidth = lineWidth;
 
@@ -96,6 +102,22 @@ class Segment {
       ctx.lineTo(p3[0], p3[1]);
 
       ctx.stroke();
+    }
+
+    if (vectorDelta) {
+      const drawVec = (p, v, c) => {
+        ctx.beginPath();
+        ctx.strokeStyle = c;
+        ctx.moveTo(p[0], p[1]);
+        ctx.lineTo(p[0] + v[0] * 20, p[1] + v[1] * 20);
+        ctx.stroke();
+      };
+      for (let u = 0; u < 1; u += vectorDelta) {
+        const { p, t, n, b } = this.point(u);
+        drawVec(p, t, "#F00");
+        drawVec(p, n, "#0F0");
+        drawVec(p, b, "#00F");
+      }
     }
 
     ctx.beginPath();
@@ -155,9 +177,9 @@ class Spline {
     return this.segment(s).point(su);
   }
 
-  draw(ctx, showControlQuad = false) {
+  draw(ctx, showControlQuad = false, vectorDelta) {
     for (let s = 0; s < this.segNum; s++) {
-      this.segment(s).draw(ctx, showControlQuad);
+      this.segment(s).draw(ctx, showControlQuad, vectorDelta);
     }
   }
 }

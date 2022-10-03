@@ -28,7 +28,7 @@
         requestAnimationFrame(animate);
 
         ctx.clearRect(0, 0, 1000, 1000);
-        spline.draw(ctx, true);
+        spline.draw(ctx, true, 0.2);
 
         const { p: punto, t, n } = spline.point(currentU);
 
@@ -51,7 +51,7 @@
         [0, 200, 0],
         [200, 200, 0],
         [200, 100, 0],
-        [200, 200, 0],
+        [200, 0, 0],
         [400, 200, 0],
         [400, 0, 0],
       ];
