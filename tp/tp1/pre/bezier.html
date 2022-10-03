@@ -3,8 +3,8 @@
   <body>
     <canvas
       id="myCanvas"
-      width="800"
-      height="600"
+      width="1000"
+      height="1000"
       style="border: 3px solid #d3d3d3"
     >
       Your browser does not support the HTML5 canvas tag.
@@ -15,11 +15,6 @@
 
     <script>
       "use strict";
-
-      function dibujarCurvaCubica(puntosDeControl, dibujarGrafo) {
-        ctx.clearRect(0, 0, 1000, 1000);
-        drawSegment(ctx, puntosDeControl, true);
-      }
 
       function dibujarVector(x1, y1, x2, y2, color) {
         ctx.beginPath();
@@ -32,11 +27,10 @@
       function animate() {
         requestAnimationFrame(animate);
 
-        const puntos = puntosDeControlCubica;
+        ctx.clearRect(0, 0, 1000, 1000);
+        spline.draw(ctx, true);
 
-        dibujarCurvaCubica(puntos, true);
-
-        const { p: punto, t, n } = segmentPoint(currentU, puntos);
+        const { p: punto, t, n } = spline.point(currentU);
 
         // dibujar punto de la curva en verde
         currentU += 0.002;
@@ -52,12 +46,17 @@
         if (currentU > 1) currentU = 0;
       }
 
-      var puntosDeControlCubica = [
-        [100, 450, 0],
+      var puntos = [
+        [0, 0, 0],
+        [0, 200, 0],
+        [200, 200, 0],
         [200, 100, 0],
-        [600, 100, 0],
-        [700, 450, 0],
+        [200, 200, 0],
+        [400, 200, 0],
+        [400, 0, 0],
       ];
+
+      var spline = new Spline(puntos);
 
       var currentU = 0;
 
