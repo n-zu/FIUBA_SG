@@ -28,7 +28,8 @@
         requestAnimationFrame(animate);
 
         ctx.clearRect(0, 0, 1000, 1000);
-        spline.canvasDraw(ctx, true, 0.2);
+        spline.canvasDraw(ctx, true, 0.02);
+        spline2.canvasDraw(ctx, false, 0.04);
 
         const { p: punto, t, n } = spline.point(currentU);
 
@@ -47,19 +48,35 @@
       }
 
       var puntos = [
+        // Seg 1
         [0, 0, 0],
         [0, 200, 0],
         [200, 200, 0],
         [200, 100, 0],
+        // Seg 2
         [200, 0, 0],
         [400, 0, 0],
         [400, 200, 0],
+        // Seg 3
         [400, 400, 0],
-        [200, 400, 0],
+        [300, 200, 0],
         [200, 200, 0],
+        // Seg 4
+        [100, 200, 0],
+        [0, 200, 0],
+        [0, 400, 0],
       ];
+      const puntos2 = puntos.map((p) => [p[0], p[1] + 300, p[2]]);
+      const convexity = [
+        SegCon.concave(),
+        SegCon.convex(),
+        SegCon.convexUpTo(0.62),
+        SegCon.concave(),
+      ];
+      const bi_normal = [0, 0, -1];
 
-      var spline = new Spline(puntos);
+      var spline = new Spline(puntos, { convexity });
+      var spline2 = new Spline(puntos2, { bi_normal });
 
       var currentU = 0;
 

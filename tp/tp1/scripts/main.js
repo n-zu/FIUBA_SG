@@ -25,7 +25,7 @@ const drawCurve = (z0, z1, delta = 0.01) => {
 
   const spline = new Spline(puntos);
 
-  spline.webglDraw(wgl, 0.01);
+  spline.webglDraw(wgl, 0.01, 0.1);
 };
 
 drawPlane(-1);
@@ -46,9 +46,7 @@ const animationStep = (t) => {
 
   //wgl.clear();
   drawPlane(-1.5);
-  drawCurve((z - 1) / 2, z * 2);
-  drawCurve((z - 1) / 2 + 0.1, z * 2 + 0.2);
-  drawCurve((z - 1) / 2 + 0.2, z * 2 + 0.4);
+  drawCurve(-1, -1);
   setTimeout(() => animationStep(t + 100), 100);
 };
 

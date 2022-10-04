@@ -14,15 +14,32 @@ const dB3 = (u) => 3 * u * u;
 
 // Config
 const debug = true;
-const convexity = 1; // 1: Convex, -1: Concave
+const default_convexity = 1; // 1: Convex, -1: Concave
 const n_delta = 0.01;
 
 // Util
 const arrayOf = (n) => [...Array(n).keys()];
+const repeat = (elem, n) => Array(n).fill(elem);
 
+class SegCon {
+  static default = () => (u) => default_convexity;
+  static convex = () => (u) => 1;
+  static concave = () => (u) => -1;
+  static convexFrom = (v) => (u) => v >= u ? 1 : -1;
+  static concaveFrom = (v) => (u) => v >= u ? -1 : 1;
+  static convexUpTo = (v) => (u) => u <= v ? 1 : -1;
+  static concaveUpTo = (v) => (u) => u <= v ? -1 : 1;
+}
+
+/* Config: {
+  convexity: SegCon,
+  bi_normal: vec3,
+}*/
 class Segment {
-  constructor(controlPoints) {
+  constructor(controlPoints, config = {}) {
     this.controlPoints = controlPoints;
+    this.convexity = config.convexity ?? SegCon.default();
+    this.bi_normal = config.bi_normal;
   }
 
   length(delta = 0.1) {
@@ -64,13 +81,15 @@ class Segment {
     const tangent = [dp[0] / mod_dp, dp[1] / mod_dp, dp[2] / mod_dp];
 
     // Normal
-    /// FIXME: if tg and dv are parallel, normal is undefined
-    /// FIXME: convexity may vary along the curve
-
-    const next_p = this.point(u + n_delta, false);
-    const dv = [0, 1, 2].map((n) => convexity * (p[n] - next_p[n]));
-
-    const bi_normal = vec.normalize(newVec(), vec.cross(newVec, tangent, dv));
+    let bi_normal;
+    if (this.bi_normal) {
+      bi_normal = this.bi_normal;
+    } else {
+      const convexity = this.convexity(u);
+      const next_p = this.point(u + n_delta, false);
+      const dv = [0, 1, 2].map((n) => convexity * (p[n] - next_p[n]));
+      bi_normal = vec.normalize(newVec(), vec.cross(newVec, tangent, dv));
+    }
     const normal = vec.normalize(
       newVec(),
       vec.cross(newVec, bi_normal, tangent)
@@ -136,15 +155,23 @@ class Segment {
   }
 }
 
+/* Config: {
+  convexity: [SegCon],
+  bi_normal: vec3,
+}*/
 class Spline {
-  constructor(controlPoints, delta = 0.01) {
+  constructor(controlPoints, config = {}) {
     if (controlPoints.length < 4) throw new Error("Not enough control points");
     if (controlPoints.length % 3 !== 1)
       throw new Error("Invalid number of control points");
 
     this.controlPoints = controlPoints;
-    this.delta = delta;
     this.segNum = (controlPoints.length - 1) / 3;
+
+    if (config.convexity && config.convexity.length !== this.segNum)
+      throw new Error("Invalid convexity array");
+
+    this.config = config;
 
     let lengths = [];
     let totalLength = 0;
@@ -161,7 +188,10 @@ class Spline {
   }
 
   segment(i) {
-    return new Segment(this.controlPoints.slice(i * 3, i * 3 + 4));
+    const controlPoints = this.controlPoints.slice(i * 3, i * 3 + 4);
+    const convexity = this.config.convexity?.[i];
+    const bi_normal = this.config.bi_normal;
+    return new Segment(controlPoints, { convexity, bi_normal });
   }
 
   mapU(u) {
@@ -191,17 +221,32 @@ class Spline {
     }
   }
 
-  webglDraw(wgl, delta = 0.01) {
-    let points = [];
-    let normals = [];
+  webglDraw(wgl, delta = 0.01, normalsDelta = undefined) {
+    {
+      let points = [];
+      let normals = [];
 
-    for (let u = 0; u <= 1.001; u = u + delta) {
-      const { p, n } = this.point(u);
-      points.push(...p);
-      normals.push(...n);
+      for (let u = 0; u <= 1.001; u = u + delta) {
+        const { p, n } = this.point(u);
+        points.push(...p);
+        normals.push(...n);
+      }
+      const idx = arrayOf(points.length / 3);
+
+      wgl.draw(points, normals, idx, wgl.gl.LINE_STRIP);
     }
-    const idx = arrayOf(points.length / 3);
 
-    wgl.draw(points, normals, idx, wgl.gl.LINE_STRIP);
+    if (normalsDelta) {
+      for (let u = 0; u <= 1.001; u = u + normalsDelta) {
+        const { p, n } = this.point(u);
+        const sn = vec.scale(newVec(), n, 0.2);
+        const dn = vec.add(newVec(), sn, p);
+
+        const points = [...p, ...dn];
+        const normals = [...newVec(), ...newVec()];
+
+        wgl.draw(points, normals, [0, 1], wgl.gl.LINES);
+      }
+    }
   }
 }
