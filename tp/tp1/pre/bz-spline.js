@@ -34,12 +34,16 @@ class SegCon {
 /* Config: {
   convexity: SegCon,
   bi_normal: vec3,
+  normal: vec3,
 }*/
 class Segment {
   constructor(controlPoints, config = {}) {
     this.controlPoints = controlPoints;
     this.convexity = config.convexity ?? SegCon.default();
-    this.bi_normal = config.bi_normal;
+
+    this.normal = config.normal;
+    this.bi_normal = config.bi_normal ?? config.normal;
+    // the only use of bi_normal is to get the normal, so we set it to skip calculation
   }
 
   length(delta = 0.1) {
@@ -90,10 +94,9 @@ class Segment {
       const dv = [0, 1, 2].map((n) => convexity * (p[n] - next_p[n]));
       bi_normal = vec.normalize(newVec(), vec.cross(newVec, tangent, dv));
     }
-    const normal = vec.normalize(
-      newVec(),
-      vec.cross(newVec, bi_normal, tangent)
-    );
+    const normal =
+      this.normal ??
+      vec.normalize(newVec(), vec.cross(newVec, bi_normal, tangent));
 
     if (
       (debug && vec.dist(newVec(), bi_normal) < 0.1) ||
@@ -158,6 +161,7 @@ class Segment {
 /* Config: {
   convexity: [SegCon],
   bi_normal: vec3,
+  normal: vec3,
 }*/
 class Spline {
   constructor(controlPoints, config = {}) {
@@ -190,8 +194,7 @@ class Spline {
   segment(i) {
     const controlPoints = this.controlPoints.slice(i * 3, i * 3 + 4);
     const convexity = this.config.convexity?.[i];
-    const bi_normal = this.config.bi_normal;
-    return new Segment(controlPoints, { convexity, bi_normal });
+    return new Segment(controlPoints, { ...this.config, convexity });
   }
 
   mapU(u) {
