@@ -7,6 +7,12 @@ await wgl.init();
 const drawLine = (p1, p2) => {
   wgl.draw([...p1, ...p2], [0, 0, 0, 0, 0, 0], [0, 1], wgl.gl.LINES);
 };
+const drawLineTo = (p, dir, len = 1) => {
+  const dir2 = vec3.normalize(vec3.create(), dir);
+  vec3.scale(dir2, dir2, len);
+  const p2 = vec3.add(vec3.create(), p, dir2);
+  drawLine(p, p2);
+};
 
 const drawPlane = (z) => {
   const vertices = [-2.0, -2.0, z, 2.0, -2.0, z, -2.0, 2.0, z, 2.0, 2.0, z];
@@ -20,7 +26,7 @@ const drawSup = (p, t, n, delta = 0.01) => {
   const z = -1;
   const puntos = [
     [0.0, 1.0, z],
-    [1.0, 0.0, z],
+    [0.0, 0.0, z],
     [1.0, -1.0, z],
     [0.0, -1.0, z],
 
@@ -42,12 +48,28 @@ const drawSup = (p, t, n, delta = 0.01) => {
   // ----------------
 
   const t_axis = vec3.cross(vec3.create(), t, sup.t);
-  const t_angle = vec3.angle(t, sup.t);
-  const t_Rot = mat4.fromRotation(mat4.create(), t_angle, t_axis);
+  let t_angle = vec3.angle(t, sup.t);
+  let t_Rot = mat4.fromRotation(mat4.create(), t_angle, t_axis);
+  {
+    const alt_t = vec3.transformMat4(vec3.create(), sup.t, t_Rot);
+    const dot = vec3.dot(alt_t, t);
+    if (dot < 0.5) {
+      t_angle = 2 * Math.PI - t_angle;
+      t_Rot = mat4.fromRotation(mat4.create(), t_angle, t_axis);
+    }
+  }
 
   const n_alt = vec3.transformMat4(vec3.create(), sup.n, t_Rot);
-  const n_angle = vec3.angle(n, n_alt);
-  const n_Rot = mat4.fromRotation(mat4.create(), n_angle, t);
+  let n_angle = vec3.angle(n, n_alt);
+  let n_Rot = mat4.fromRotation(mat4.create(), n_angle, t);
+  {
+    const alt_n = vec3.transformMat4(vec3.create(), n_alt, n_Rot);
+    const dot = vec3.dot(alt_n, n);
+    if (dot < 0.5) {
+      n_angle = 2 * Math.PI - n_angle;
+      n_Rot = mat4.fromRotation(mat4.create(), n_angle, t);
+    }
+  }
 
   const rot = mat4.multiply(mat4.create(), n_Rot, t_Rot);
 
@@ -87,10 +109,21 @@ const drawSup = (p, t, n, delta = 0.01) => {
 
   const alt_spline = new Spline(alt_puntos, alt_config);
   alt_spline.webglDraw(wgl, delta, 0.1);
+
+  // ----------------
+  {
+    drawLineTo(sup.p, sup.t);
+    drawLineTo(sup.p, sup.n, 0.5);
+    const altP = vec3.transformMat4(vec3.create(), sup.p, matrix);
+    const altT = [...vec3.transformMat4(vec3.create(), sup.t, rot)];
+    const altN = [...vec3.transformMat4(vec3.create(), sup.n, rot)];
+    drawLineTo(altP, altT, 0.6);
+    drawLineTo(altP, altN, 0.3);
+  }
 };
 
 const getCurve = (z) => {
-  const puntos = [
+  const _puntos = [
     [-2.0, -2.0, z],
     [2.0, -2.0, z],
     [2.0, -2.0, z],
@@ -100,6 +133,8 @@ const getCurve = (z) => {
     [2.0, 2.0, z],
     [-2.0, 2.0, z],
   ];
+
+  const puntos = _puntos; //.reverse();
 
   const config = {
     normal: [0, 0, 1],
@@ -111,7 +146,6 @@ const getCurve = (z) => {
 const curve = getCurve(-1);
 
 const animationStep = (t) => {
-  return;
   const num = 5;
   const dt = 500;
   const tf = (t / 1000) % num;
