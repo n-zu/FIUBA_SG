@@ -4,7 +4,95 @@
     <title>Sweeping Solid</title>
     <link rel="icon" href="../assets/sphere.ico" />
     <script src="../../../lib/gl-matrix-3.3.0.min.js"></script>
-    <script src="../scripts/main.js" type="module" defer></script>
+    <script type="module">
+      import { WebGL } from "../scripts/webgl.js";
+      import { mx } from "../scripts/util.js";
+      import { Spline, Surface, SweepSolid } from "../scripts/geometry.js";
+
+      const wgl = await new WebGL("#main").init();
+
+      const getCurve = (z) => {
+        const _puntos = [
+          [-2.0, -2.0, z],
+          [2.0, -2.0, z],
+          [2.0, -2.0, z],
+          [2.0, 1.0, z],
+
+          [2.0, 2.0, z],
+          [2.0, 2.0, z],
+          [-2.0, 2.0, z],
+        ];
+
+        const puntos = _puntos; //.reverse();
+
+        const config = {
+          normal: [0, 0, 1],
+        };
+
+        return new Spline(puntos, config);
+      };
+
+      const getSurface = (z) => {
+        const points = [
+          [0.0, 1.0, z],
+          [0.0, 0.0, z],
+          [1.0, -1.0, z],
+          [0.0, -1.0, z],
+
+          [-1.0, -1.0, z],
+          [-1.0, 1.0, z],
+          [0.0, 1.0, z],
+        ];
+
+        const config = {
+          bi_normal: [0, 0, 1],
+        };
+
+        const orientation = {
+          p: mx.vec(0, 0, z),
+          n: mx.vec(0, 1, 0),
+          t: mx.vec(0, 0, -1),
+        };
+
+        const shape = new Spline(points, config);
+        const surface = new Surface(shape, orientation);
+
+        return surface;
+      };
+
+      const drawSurfaceAt = (surface, orientation, delta = 0.01) => {
+        surface.alignTo(orientation);
+        surface.webglDraw(wgl, delta, {});
+      };
+
+      const drawSurfaceAtCurve = (surface, curve, u, delta = 0.01) =>
+        drawSurfaceAt(surface, curve.point(u), delta);
+
+      const z = 0;
+      const curve = getCurve(z);
+      const surface = getSurface(z);
+
+      const solid = new SweepSolid(surface, curve);
+
+      curve.webglDraw(wgl, 0.01, 0.05);
+
+      const di = 1 / 4;
+      for (let i = 0; i < 1 + di; i += di) {
+        drawSurfaceAtCurve(surface, curve, i);
+      }
+
+      solid.webglDraw(wgl, 20, 20, { showNormals: true });
+
+      const animationStep = (t) => {
+        const dt = 200;
+        const uf = (t / 10000) % 1;
+
+        curve.webglDraw(wgl, 0.01, 0.05);
+        drawSurfaceAtCurve(surface, curve, uf);
+        setTimeout(() => animationStep(t + dt), dt);
+      };
+      // animationStep(0);
+    </script>
   </head>
   <body>
     <canvas id="main" width="1000" height="500">
