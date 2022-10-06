@@ -1,4 +1,4 @@
-import { mat4 } from "./util.js";
+import { mat4, mx } from "./util.js";
 
 export const setup = (gl, canvas) => {
   gl.enable(gl.DEPTH_TEST);
@@ -43,8 +43,8 @@ const makeShader = (gl, src, type) => {
 
 export const initShaders = async (gl) => {
   const [vertexSrc, fragmentSrc] = await Promise.all([
-    fetch("./shaders/vertex.glsl").then((res) => res.text()),
-    fetch("./shaders/fragment.glsl").then((res) => res.text()),
+    fetch("../shaders/vertex.glsl").then((res) => res.text()),
+    fetch("../shaders/fragment.glsl").then((res) => res.text()),
   ]);
 
   const vertexShader = makeShader(gl, vertexSrc, gl.VERTEX_SHADER);
@@ -127,9 +127,21 @@ export class WebGL {
     this.glProgram = await initShaders(this.gl);
     setupMatrices(this.gl, this.canvas, this.glProgram);
     this.clear();
+    return this;
   }
 
   draw(vertices, normals, indices, mode) {
     draw(this.gl, this.glProgram, vertices, normals, indices, mode);
   }
+
+  drawLine = (p1, p2) => {
+    this.draw([...p1, ...p2], [0, 0, 0, 0, 0, 0], [0, 1], this.gl.LINES);
+  };
+
+  drawVec = (p, dir, len = 1) => {
+    const dir2 = mx.norm(dir);
+    mx.scaleVec(dir2, len);
+    const p2 = mx.add(p, dir2);
+    this.drawLine(p, p2);
+  };
 }

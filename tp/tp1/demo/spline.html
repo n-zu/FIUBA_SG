@@ -1,20 +1,13 @@
 <!DOCTYPE html>
 <html>
-  <body>
-    <canvas
-      id="myCanvas"
-      width="1000"
-      height="1000"
-      style="border: 3px solid #d3d3d3"
-    >
-      Your browser does not support the HTML5 canvas tag.
-    </canvas>
-
+  <head>
+    <title>Spline</title>
+    <link rel="icon" href="../assets/sphere.ico" />
     <script src="../../../lib/gl-matrix-3.3.0.min.js"></script>
-    <script src="bz-spline.js"></script>
-
-    <script>
+    <script type="module">
       "use strict";
+
+      import { SegCon, Spline } from "../scripts/geometry.js";
 
       function dibujarVector(x1, y1, x2, y2, color) {
         ctx.beginPath();
@@ -85,5 +78,15 @@
 
       animate();
     </script>
+  </head>
+  <body>
+    <canvas
+      id="myCanvas"
+      width="1000"
+      height="1000"
+      style="border: 3px solid #d3d3d3"
+    >
+      Your browser does not support the HTML5 canvas tag.
+    </canvas>
   </body>
 </html>

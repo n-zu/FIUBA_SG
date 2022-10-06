@@ -1,5 +1,4 @@
-const vec = glMatrix.vec3;
-const newVec = () => vec.fromValues(0, 0, 0);
+import { mx } from "./util.js";
 
 // Bases
 const B0 = (u) => (1 - u) * (1 - u) * (1 - u);
@@ -33,8 +32,8 @@ class SegCon {
 
 /* Config: {
   convexity: SegCon,
-  bi_normal: vec3,
-  normal: vec3,
+  bi_normal: vec,
+  normal: vec,
 }*/
 class Segment {
   constructor(controlPoints, config = {}) {
@@ -53,7 +52,7 @@ class Segment {
     for (let u = 0; u < 1 - delta; u += delta) {
       const p = this.point(u, false);
       const next_p = this.point(u + delta, false);
-      length += vec.dist(p, next_p);
+      length += mx.dist(p, next_p);
     }
 
     this._len = length;
@@ -92,16 +91,11 @@ class Segment {
       const convexity = this.convexity(u);
       const next_p = this.point(u + n_delta, false);
       const dv = [0, 1, 2].map((n) => convexity * (p[n] - next_p[n]));
-      bi_normal = vec.normalize(newVec(), vec.cross(newVec, tangent, dv));
+      bi_normal = mx.norm(mx.cross(tangent, dv));
     }
-    const normal =
-      this.normal ??
-      vec.normalize(newVec(), vec.cross(newVec, bi_normal, tangent));
+    const normal = this.normal ?? mx.norm(mx.cross(bi_normal, tangent));
 
-    if (
-      (debug && vec.dist(newVec(), bi_normal) < 0.1) ||
-      vec.dist(newVec(), normal) < 0.1
-    )
+    if ((debug && mx.len(bi_normal) < 0.1) || mx.len(normal) < 0.1)
       console.warn("NORMAL ERROR");
 
     return { p, t: tangent, n: normal, b: bi_normal };
@@ -160,8 +154,8 @@ class Segment {
 
 /* Config: {
   convexity: [SegCon],
-  bi_normal: vec3,
-  normal: vec3,
+  bi_normal: vec,
+  normal: vec,
 }*/
 class Spline {
   constructor(controlPoints, config = {}) {
@@ -189,6 +183,13 @@ class Spline {
     }
 
     this.lengths = lengths.map((l) => l / totalLength);
+    this.length = totalLength;
+    this.transform = { matrix: mx.mat(), rot: mx.mat() };
+  }
+
+  setTransform(transform) {
+    this.transform = transform;
+    return this;
   }
 
   segment(i) {
@@ -215,7 +216,14 @@ class Spline {
     if (u > 1) u = 1;
 
     const [s, su] = this.mapU(u);
-    return this.segment(s).point(su);
+    const { p, t, n } = this.segment(s).point(su);
+    const { matrix, rot } = this.transform;
+
+    return {
+      p: mx.transform(p, matrix),
+      t: mx.transform(t, rot),
+      n: mx.transform(n, rot),
+    };
   }
 
   canvasDraw(ctx, showControlQuad = false, vectorDelta) {
@@ -225,6 +233,7 @@ class Spline {
   }
 
   webglDraw(wgl, delta = 0.01, normalsDelta = undefined) {
+    // Draw Spline
     {
       let points = [];
       let normals = [];
@@ -239,17 +248,95 @@ class Spline {
       wgl.draw(points, normals, idx, wgl.gl.LINE_STRIP);
     }
 
+    // Draw Normals
     if (normalsDelta) {
       for (let u = 0; u <= 1.001; u = u + normalsDelta) {
         const { p, n } = this.point(u);
-        const sn = vec.scale(newVec(), n, 0.2);
-        const dn = vec.add(newVec(), sn, p);
+        const sn = mx.scaled(n, 0.2);
+        const dn = mx.add(sn, p);
 
         const points = [...p, ...dn];
-        const normals = [...newVec(), ...newVec()];
+        const normals = [...mx.vec(), ...mx.vec()];
 
         wgl.draw(points, normals, [0, 1], wgl.gl.LINES);
       }
     }
   }
 }
+
+/*
+Shape: Spline
+Orientation: {
+  p: vec,
+  t: vec,
+  n: vec,
+}
+Transform: mat
+*/
+export class Surface {
+  constructor(shape, orientation) {
+    this.shape = shape;
+    this.orientation = orientation ?? {
+      p: [0, 0, 0],
+      t: [0, 0, -1],
+      n: [0, 1, 0],
+    };
+    this.transform = { matrix: mx.mat(), rot: mx.mat() };
+  }
+  setTransform(transform) {
+    this.shape.setTransform(transform);
+    this.transform = transform;
+    return this;
+  }
+  getOrientation() {
+    const { p, t, n } = this.orientation;
+    const { matrix, rot } = this.transform;
+
+    return {
+      p: mx.transformed(p, matrix),
+      t: mx.transformed(t, rot),
+      n: mx.transformed(n, rot),
+    };
+  }
+
+  /*Config: {
+    fill: bool (t),
+    stroke: bool (f),
+    reverse: bool (f),
+    normalsDelta: float,
+  }*/
+  webglDraw(wgl, delta = 0.01, config = {}) {
+    const fill = config.fill ?? true;
+    const stroke = config.stroke ?? false;
+    const reverse = config.reverse ?? false;
+    const showNormals = config.showNormals ?? undefined;
+
+    const { p: center, t: _t } = this.getOrientation();
+    const t = reverse ? mx.neg(_t) : _t;
+
+    if (stroke) this.shape.webglDraw(wgl, delta, showNormals && delta);
+    if (fill) {
+      let points = [...center];
+      let normals = [...t];
+
+      for (let u = 0; u <= 1.001; u = u + delta) {
+        const { p } = this.shape.point(u);
+        points.push(...p);
+        normals.push(...t);
+      }
+
+      const n_points = points.length / 3;
+      const idx = arrayOf(n_points);
+
+      wgl.draw(points, normals, idx, wgl.gl.TRIANGLE_FAN);
+      if (showNormals) {
+        for (let i = 0; i < n_points; i++) {
+          const p = points.slice(i * 3, i * 3 + 3);
+          wgl.drawVec(p, t, 0.2);
+        }
+      }
+    }
+  }
+}
+
+export { SegCon, Segment, Spline };
