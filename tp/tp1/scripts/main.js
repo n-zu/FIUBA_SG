@@ -1,51 +1,8 @@
 import { WebGL } from "./webgl.js";
 import { mx } from "./util.js";
-import { Spline, Surface } from "./geometry.js";
+import { Spline, Surface, SweepSolid } from "./geometry.js";
 
 const wgl = await new WebGL("#main").init();
-
-const drawSup = (p, t, n, delta = 0.01) => {
-  const z = -1;
-  const puntos = [
-    [0.0, 1.0, z],
-    [0.0, 0.0, z],
-    [1.0, -1.0, z],
-    [0.0, -1.0, z],
-
-    [-1.0, -1.0, z],
-    [-1.0, 1.0, z],
-    [0.0, 1.0, z],
-  ];
-
-  const config = {
-    bi_normal: [0, 0, 1],
-  };
-
-  const sup = {
-    p: mx.vec(0, 0, z),
-    n: mx.vec(0, 1, 0),
-    t: mx.vec(0, 0, -1),
-  };
-
-  // ----------------
-
-  const { matrix, rot } = mx.alignMatrix(sup, { p, t, n });
-
-  const alt_puntos = puntos.map((p) => mx.transform([...p], matrix));
-  const alt_config = {
-    bi_normal: mx.transform([...config.bi_normal], rot),
-  };
-
-  // ----------------
-
-  const spline = new Spline(puntos, config);
-  const surface = new Surface(spline, sup, matrix);
-  surface.setTransform({ matrix, rot });
-  surface.webglDraw(wgl, delta, {
-    showNormals: true,
-    reverse: true,
-  });
-};
 
 const getCurve = (z) => {
   const _puntos = [
@@ -68,29 +25,62 @@ const getCurve = (z) => {
   return new Spline(puntos, config);
 };
 
-const curve = getCurve(-1);
+const getSurface = (z) => {
+  const points = [
+    [0.0, 1.0, z],
+    [0.0, 0.0, z],
+    [1.0, -1.0, z],
+    [0.0, -1.0, z],
 
-const animationStep = (t) => {
-  const dt = 500;
-  const uf = (t / 5000) % 1;
-  const animate = false;
+    [-1.0, -1.0, z],
+    [-1.0, 1.0, z],
+    [0.0, 1.0, z],
+  ];
 
-  curve.webglDraw(wgl, 0.01, 0.05);
+  const config = {
+    bi_normal: [0, 0, 1],
+  };
 
-  {
-    const { p: _p, n: _n, t: _t } = curve.point(uf);
-    drawSup(_p, _t, _n, 0.01);
-  }
+  const orientation = {
+    p: mx.vec(0, 0, z),
+    n: mx.vec(0, 1, 0),
+    t: mx.vec(0, 0, -1),
+  };
 
-  if (animate) setTimeout(() => animationStep(t + dt), dt);
-  else {
-    const di = 1 / 4;
-    for (let i = 0; i < 1 + di; i += di) {
-      console.log("i", i);
-      const { p: _p, n: _n, t: _t } = curve.point(i);
-      drawSup(_p, _t, _n, 0.01);
-    }
-  }
+  const shape = new Spline(points, config);
+  const surface = new Surface(shape, orientation);
+
+  return surface;
 };
 
-animationStep(0);
+const drawSurfaceAt = (surface, orientation, delta = 0.01) => {
+  surface.alignTo(orientation);
+  surface.webglDraw(wgl, delta, {});
+};
+
+const drawSurfaceAtCurve = (surface, curve, u, delta = 0.01) =>
+  drawSurfaceAt(surface, curve.point(u), delta);
+
+const curve = getCurve(-1);
+const surface = getSurface(-1);
+
+const solid = new SweepSolid(surface, curve);
+
+curve.webglDraw(wgl, 0.01, 0.05);
+
+const di = 1 / 4;
+for (let i = 0; i < 1 + di; i += di) {
+  drawSurfaceAtCurve(surface, curve, i);
+}
+
+solid.webglDraw(wgl, 20, 20, { showNormals: true });
+
+const animationStep = (t) => {
+  const dt = 200;
+  const uf = (t / 10000) % 1;
+
+  curve.webglDraw(wgl, 0.01, 0.05);
+  drawSurfaceAtCurve(surface, curve, uf);
+  setTimeout(() => animationStep(t + dt), dt);
+};
+// animationStep(0);

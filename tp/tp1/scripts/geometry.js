@@ -273,7 +273,7 @@ Orientation: {
 }
 Transform: mat
 */
-export class Surface {
+class Surface {
   constructor(shape, orientation) {
     this.shape = shape;
     this.orientation = orientation ?? {
@@ -288,6 +288,10 @@ export class Surface {
     this.transform = transform;
     return this;
   }
+  alignTo(orientation) {
+    const transform = mx.alignMatrix(this.orientation, orientation);
+    return this.setTransform(transform);
+  }
   getOrientation() {
     const { p, t, n } = this.orientation;
     const { matrix, rot } = this.transform;
@@ -297,6 +301,9 @@ export class Surface {
       t: mx.transformed(t, rot),
       n: mx.transformed(n, rot),
     };
+  }
+  shapePoint(u) {
+    return this.shape.point(u);
   }
 
   /*Config: {
@@ -339,4 +346,56 @@ export class Surface {
   }
 }
 
-export { SegCon, Segment, Spline };
+class SweepSolid {
+  constructor(shape, path) {
+    this.shape = shape;
+    this.path = path;
+    this.transform = { matrix: mx.mat(), rot: mx.mat() };
+  }
+
+  setTransform(transform) {
+    this.shape.setTransform(transform);
+    this.path.setTransform(transform);
+    this.transform = transform;
+    return this;
+  }
+
+  point(u, v) {
+    const curvePoint = this.path.point(u);
+    this.shape.alignTo(curvePoint);
+    const shapePoint = this.shape.shapePoint(v);
+
+    return shapePoint;
+  }
+
+  webglDraw(wgl, rows = 50, cols = 50, config = {}) {
+    const points = [];
+    const normals = [];
+
+    for (let r = 0; r <= rows; r++) {
+      for (let c = 0; c <= cols; c++) {
+        const u = r / rows;
+        const v = c / cols;
+        const { p, n } = this.point(u, v);
+
+        if (config.showNormals) wgl.drawVec(p, n, 0.2);
+
+        points.push(...p);
+        normals.push(...n);
+      }
+    }
+
+    const idx = [];
+
+    const getN = (i, j) => j + (cols + 1) * i;
+
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j <= cols; j++) idx.push(getN(i, j), getN(i + 1, j));
+      // idx.push(getN(i + 1, cols), getN(i + 1, 0)); // No es necesario en la ultima fila // ???
+    }
+
+    wgl.draw(points, normals, idx, wgl.gl.TRIANGLE_STRIP);
+  }
+}
+
+export { SegCon, Segment, Spline, Surface, SweepSolid };
