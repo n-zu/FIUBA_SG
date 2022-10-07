@@ -8,8 +8,10 @@
       import { WebGL } from "../scripts/webgl.js";
       import { mx } from "../scripts/util.js";
       import { Spline, Surface, SweepSolid } from "../scripts/geometry.js";
+      import { CameraControl } from "../scripts/camera.js";
 
       const wgl = await new WebGL("#main").init();
+      const camera = new CameraControl([0, 0, 10]);
 
       const getCurve = (z) => {
         const _puntos = [
@@ -74,14 +76,17 @@
 
       const solid = new SweepSolid(surface, curve);
 
-      curve.webglDraw(wgl, 0.01, 0.05);
+      const drawScene = () => {
+        curve.webglDraw(wgl, 0.01, 0.05);
 
-      const di = 1 / 4;
-      for (let i = 0; i < 1 + di; i += di) {
-        drawSurfaceAtCurve(surface, curve, i);
-      }
+        const di = 1 / 4;
+        for (let i = 0; i < 1 + di; i += di) {
+          drawSurfaceAtCurve(surface, curve, i);
+        }
 
-      solid.webglDraw(wgl, 20, 20, { showNormals: true });
+        solid.webglDraw(wgl, 20, 20, { showNormals: true });
+      };
+      drawScene();
 
       const animationStep = (t) => {
         const dt = 200;
@@ -92,6 +97,15 @@
         setTimeout(() => animationStep(t + dt), dt);
       };
       // animationStep(0);
+
+      const tick = () => {
+        const viewMatrix = camera.getViewMatrix();
+        wgl.setViewMatrix(viewMatrix);
+        requestAnimationFrame(tick);
+        camera.update();
+        drawScene();
+      };
+      tick();
     </script>
   </head>
   <body>

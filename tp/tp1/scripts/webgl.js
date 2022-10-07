@@ -130,6 +130,14 @@ export class WebGL {
     return this;
   }
 
+  setViewMatrix(viewMatrix) {
+    const viewMatrixUniform = this.gl.getUniformLocation(
+      this.glProgram,
+      "viewMatrix"
+    );
+    this.gl.uniformMatrix4fv(viewMatrixUniform, false, viewMatrix);
+  }
+
   draw(vertices, normals, indices, mode) {
     draw(this.gl, this.glProgram, vertices, normals, indices, mode);
   }
