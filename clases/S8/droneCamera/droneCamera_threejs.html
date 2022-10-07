@@ -1,0 +1,146 @@
+<html>
+  <head>
+    <title></title>
+  </head>
+  <style>
+    #info {
+      border: 1px solid white;
+      padding: 30px;
+      min-height: 500px;
+      min-width: 100px;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      color: white;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    body {
+      background-color: #222222;
+      margin: auto;
+      text-align: center;
+      font-family: Arial;
+      margin: auto;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #container3D {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+
+  <body>
+    <div id="container3D"></div>
+    <div id="info"></div>
+
+    <script src="../../../lib/gl-matrix-3.3.0.min.js"></script>
+    <script src="../../../lib/jquery-2.1.4.min.js"></script>
+    <script src="../../../lib/three.min.r101.js"></script>
+    <script src="droneCamera.js"></script>
+    <script>
+      var $window = $(window);
+      var $container = $("#container3D");
+
+      var renderer, camera, scene, controls;
+
+      let droneControl = new DroneCameraControl();
+
+      function start() {
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize($window.width(), $window.height() - 10);
+        renderer.setClearColor(0x333333);
+
+        var aspect = $window.width() / $window.height();
+
+        camera = new THREE.PerspectiveCamera(65, aspect, 0.1, 100000);
+        camera.position.set(50, 50, 50);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+        scene = new THREE.Scene();
+        //controls = new THREE.OrbitControls(camera,renderer.domElement);
+
+        $container.append(renderer.domElement);
+        $window.resize(onResize);
+
+        // Defino elementos de la escena
+
+        var ambienLight = new THREE.AmbientLight(0x222266);
+        scene.add(ambienLight);
+
+        var light1 = new THREE.PointLight(0xffffff, 1);
+        light1.position.set(500.0, 1000.0, 0.0);
+        scene.add(light1);
+
+        var gridHelper = new THREE.GridHelper(1000, 100);
+        scene.add(gridHelper);
+
+        var axesHelper = new THREE.AxesHelper(8);
+        scene.add(axesHelper);
+
+        // creo un objeto contenedor
+        contenedorHelicoptero = new THREE.Group();
+        contenedorHelicoptero.matrixAutoUpdate = false;
+
+        // creo el helicoptero
+
+        var geometry = new THREE.BoxGeometry(5, 1, 10);
+        var material = new THREE.MeshPhongMaterial({ color: 0xcccccc });
+
+        helicoptero = new THREE.Mesh(geometry, material);
+
+        var axesHelper = new THREE.AxesHelper(20);
+        helicoptero.add(axesHelper);
+
+        // agrego el helicoptero al contenedor
+        contenedorHelicoptero.add(helicoptero);
+
+        // agrego el contenedor a la escena
+        scene.add(contenedorHelicoptero);
+
+        // agrego la cola al helicoptero
+        var geometry = new THREE.BoxGeometry(1, 1, 3);
+        var material = new THREE.MeshPhongMaterial({ color: 0xcccccc });
+        cola = new THREE.Mesh(geometry, material);
+        cola.position.z = -6;
+        helicoptero.add(cola);
+
+        render();
+      }
+
+      function onResize() {
+        let container3D = renderer.domElement;
+
+        let w = container3D.offsetWidth;
+        let h = container3D.offsetHeight;
+
+        renderer.setSize(w, h);
+
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        //console.log("resize w,h:"+w+","+h)
+      }
+
+      function render() {
+        requestAnimationFrame(render);
+
+        droneControl.update();
+        let m = droneControl.getMatrix();
+
+        contenedorHelicoptero.matrix.elements = m;
+
+        let st = "";
+        m.forEach(function (v, i) {
+          st += "e" + i + "= " + v.toFixed(3) + "<br>";
+        });
+        // actualizo la info en pantalla.
+        $("#info").html("matrix: <br><br>" + st);
+
+        renderer.render(scene, camera, false, false);
+      }
+
+      start();
+    </script>
+  </body>
+</html>

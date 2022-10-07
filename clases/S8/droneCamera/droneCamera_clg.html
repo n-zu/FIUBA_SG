@@ -1,0 +1,43 @@
+<html>
+  <head>
+    <title></title>
+  </head>
+  <style>
+    body {
+      background-color: #222222;
+      margin: auto;
+      text-align: center;
+      font-family: Arial;
+      margin: auto;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #container3D {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+
+  <body>
+    <div id="container3D"></div>
+
+    <script src="../../../lib/gl-matrix-3.3.0.min.js"></script>
+    <script src="droneCamera.js"></script>
+    <script>
+      let droneControl = new DroneCameraControl();
+
+      function render() {
+        requestAnimationFrame(render);
+
+        droneControl.update(); // IMPORTANTE, actualizar el estado del control en cada frame
+
+        let m = droneControl.getMatrix(); // obtenemos la matriz de transformacion
+
+        console.log(m);
+      }
+
+      render();
+    </script>
+  </body>
+</html>
