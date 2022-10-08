@@ -43,39 +43,73 @@ export const mx = {
 
   /// Mat
   mul: (a, b) => mat4.multiply(mat4.create(), a, b),
-  alignMatrix: (vec, ref, rotation) => {
-    const { p, t, n } = ref;
-    const t_axis = mx.cross(t, vec.t);
-    let t_angle = mx.angle(t, vec.t);
-    let t_Rot = mx.rotation(t_angle, t_axis);
-    {
-      const alt_t = mx.transform([...vec.t], t_Rot);
-      const dot = mx.dot(alt_t, t);
-      if (dot < 0.5) {
-        t_angle = 2 * Math.PI - t_angle;
-        t_Rot = mx.rotation(t_angle, t_axis);
-      }
-    }
 
-    const n_alt = mx.transform([...vec.n], t_Rot);
-    let n_angle = mx.angle(n, n_alt);
-    let n_Rot = mx.rotation(n_angle, t);
-    {
-      const alt_n = mx.transform([...n_alt], n_Rot);
-      const dot = mx.dot(alt_n, n);
-      if (dot < 0.5) {
-        n_angle = 2 * Math.PI - n_angle;
-        n_Rot = mx.rotation(n_angle, t);
-      }
-    }
-
-    const rot = mx.mul(n_Rot, t_Rot);
-
-    const matrix = mx.mat();
-    mx.translate(matrix, mx.neg(vec.p));
-    mx.apply(matrix, rot);
-    mx.translate(matrix, p);
+  /// Align
+  _alignMatrix: (vec, ref) => {
+    const matrix = this.mat();
+    this.translate(matrix, this.neg(vec.p));
+    this.apply(matrix, rot);
+    this.translate(matrix, p);
 
     return { matrix, rot };
+  },
+  alignVecRot(r, v, _axis = undefined) {
+    const axis = _axis ?? this.cross(r, v);
+    const angle = this.angle(r, v);
+    if (!angle) return this.mat();
+
+    let rot = this.rotation(angle, axis);
+
+    let _v = this.transformed(v, rot);
+    if (this.dot(_v, r) < 0.5) rot = this.rotation(-angle, axis);
+
+    return rot;
+  },
+  alignRot(vec, ref) {
+    const t_rot = this.alignVecRot(ref.t, vec.t);
+
+    const n_tr = this.transformed(vec.n, t_rot);
+    const n_rot = this.alignVecRot(ref.n, n_tr, ref.t);
+
+    const rot = this.mul(n_rot, t_rot);
+
+    return rot;
+  },
+  alignMatrix(vec, ref) {
+    const rot = this.alignRot(vec, ref);
+
+    const matrix = this.mat();
+    this.translate(matrix, this.neg(vec.p));
+    this.apply(matrix, rot);
+    this.translate(matrix, ref.p);
+
+    return { matrix, rot };
+  },
+};
+
+export const dmx = {
+  ...mx,
+  validateAlignRot(vec, ref, rot, maxIter = 3) {
+    const n = this.transformed(vec.n, rot);
+    const dist = this.dist(n, ref.n);
+
+    if (dist > 0.5) {
+      const t = this.transformed(vec.t, rot);
+      const rot2 = this.alignRot({ t, n }, ref, maxIter - 1);
+      return this.mul(rot2, rot);
+    }
+
+    return rot;
+  },
+  alignRot(vec, ref, maxIter = 3) {
+    const t_rot = this.alignVecRot(ref.t, vec.t);
+
+    const n_tr = this.transformed(vec.n, t_rot);
+    const n_rot = this.alignVecRot(ref.n, n_tr, ref.t);
+
+    const rot = this.mul(n_rot, t_rot);
+
+    if (maxIter) return this.validateAlignRot(vec, ref, rot, maxIter);
+    return rot;
   },
 };

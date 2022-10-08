@@ -468,15 +468,10 @@ class SweepSolid {
     return this;
   }
 
-  draw(wgl) {
+  draw(wgl, mode = wgl.gl.TRIANGLE_STRIP) {
     if (!this.buffers) this.setupBuffers(wgl);
     const { pointsBuffer, normalsBuffer, idxBuffer } = this.buffers;
-    wgl.drawFromBuffers(
-      pointsBuffer,
-      normalsBuffer,
-      idxBuffer,
-      wgl.gl.TRIANGLE_STRIP
-    );
+    wgl.drawFromBuffers(pointsBuffer, normalsBuffer, idxBuffer, mode);
 
     this.drawCovers(wgl);
   }

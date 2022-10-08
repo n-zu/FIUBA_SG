@@ -6,7 +6,7 @@
     <script src="../../../lib/gl-matrix-3.3.0.min.js"></script>
     <script type="module">
       import { WebGL } from "../scripts/webgl.js";
-      import { mx } from "../scripts/util.js";
+      import { mx, dmx } from "../scripts/util.js";
       import { Spline, Surface, SweepSolid } from "../scripts/geometry.js";
       import { CameraControl } from "../scripts/camera.js";
 
@@ -18,7 +18,7 @@
           [-2.0, -2.0, z],
           [2.0, -2.0, z],
           [2.0, -2.0, z],
-          [2.0, 1.0, z],
+          [2.0, 0.0, z],
 
           [2.0, 2.0, z],
           [2.0, 2.0, z],
@@ -35,7 +35,7 @@
       };
 
       const getSurface = (z) => {
-        const points = [
+        const droplet_points = [
           [0.0, 1.0, z],
           [0.0, 0.0, z],
           [1.0, -1.0, z],
@@ -43,6 +43,17 @@
 
           [-1.0, -1.0, z],
           [-1.0, 1.0, z],
+          [0.0, 1.0, z],
+        ];
+
+        const points = [
+          [0.0, 1.0, z],
+          [1.0, 1.0, z],
+          [1.0, -1.0, z],
+          [0.0, -1.0, z],
+
+          [0.0, 0.0, z],
+          [0.0, 0.0, z],
           [0.0, 1.0, z],
         ];
 
@@ -77,28 +88,50 @@
       const solid = new SweepSolid(surface, curve);
       solid.setupBuffers(wgl, 50, 50);
 
-      const drawScene = (showSolid = true) => {
-        if (showSolid) {
-          solid.draw(wgl);
-        } else {
-          curve.webglDraw(wgl, 0.01, 0.05);
+      const scanSurface = (from, to, t, factor) => {
+        const u = from + ((to - from) * (Math.sin(t / factor) + 1)) / 2;
+        drawSurfaceAtCurve(surface, curve, u);
+      };
 
-          const di = 1 / 4;
-          for (let i = 0; i < 1 + di; i += di) {
-            drawSurfaceAtCurve(surface, curve, i);
-          }
+      const drawScene = (t, scan = false) => {
+        solid.draw(wgl, wgl.gl.LINE_STRIP);
+
+        if (scan) {
+          scanSurface(0.65, 0.67, t, 1000);
+          scanSurface(0.5, 0.8, t, 1000);
+          scanSurface(0, 1, t, 1000);
         }
       };
       drawScene();
 
-      const tick = () => {
+      const tick = (t) => {
         requestAnimationFrame(tick);
         const viewMatrix = camera.getViewMatrix();
         wgl.setViewMatrix(viewMatrix);
         camera.update();
-        drawScene();
+        drawScene(t, true);
       };
-      tick();
+      //tick();
+
+      {
+        //DEBUG
+        const curvePoint = curve.point(0.66);
+        const surfaceOrientation = surface.orientation;
+        console.log("curvePoint", curvePoint);
+        console.log("surfaceOrientation", surfaceOrientation);
+
+        const transform = dmx.alignMatrix(surfaceOrientation, curvePoint);
+        const newOrient = {
+          p: mx.transformed(surfaceOrientation.p, transform.matrix),
+          n: mx.transformed(surfaceOrientation.n, transform.rot),
+          t: mx.transformed(surfaceOrientation.t, transform.rot),
+        };
+
+        console.log("newOrient", newOrient);
+
+        surface.alignTo(curvePoint);
+        surface.webglDraw(wgl);
+      }
     </script>
   </head>
   <body>
