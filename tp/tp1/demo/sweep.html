@@ -75,33 +75,26 @@
       const surface = getSurface(z);
 
       const solid = new SweepSolid(surface, curve);
+      solid.setupBuffers(wgl, 50, 50);
 
-      const drawScene = () => {
-        curve.webglDraw(wgl, 0.01, 0.05);
+      const drawScene = (showSolid = true) => {
+        if (showSolid) {
+          solid.draw(wgl);
+        } else {
+          curve.webglDraw(wgl, 0.01, 0.05);
 
-        const di = 1 / 4;
-        for (let i = 0; i < 1 + di; i += di) {
-          drawSurfaceAtCurve(surface, curve, i);
+          const di = 1 / 4;
+          for (let i = 0; i < 1 + di; i += di) {
+            drawSurfaceAtCurve(surface, curve, i);
+          }
         }
-
-        solid.webglDraw(wgl, 20, 20, { showNormals: true });
       };
       drawScene();
 
-      const animationStep = (t) => {
-        const dt = 200;
-        const uf = (t / 10000) % 1;
-
-        curve.webglDraw(wgl, 0.01, 0.05);
-        drawSurfaceAtCurve(surface, curve, uf);
-        setTimeout(() => animationStep(t + dt), dt);
-      };
-      // animationStep(0);
-
       const tick = () => {
+        requestAnimationFrame(tick);
         const viewMatrix = camera.getViewMatrix();
         wgl.setViewMatrix(viewMatrix);
-        requestAnimationFrame(tick);
         camera.update();
         drawScene();
       };

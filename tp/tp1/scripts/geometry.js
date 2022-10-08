@@ -344,6 +344,29 @@ class Surface {
       }
     }
   }
+
+  getBuffers(wgl, delta = 0.01, reverse = false) {
+    const { p: center, t: _t } = this.getOrientation();
+    const t = reverse ? mx.neg(_t) : _t;
+
+    let points = [...center];
+    let normals = [...t];
+
+    for (let u = 0; u <= 1.001; u = u + delta) {
+      const { p } = this.shape.point(u);
+      points.push(...p);
+      normals.push(...t);
+    }
+
+    const n_points = points.length / 3;
+    const idx = arrayOf(n_points);
+
+    return {
+      points: wgl.createBuffer(points),
+      normals: wgl.createBuffer(normals),
+      idx: wgl.createIndexBuffer(idx),
+    };
+  }
 }
 
 class SweepSolid {
@@ -368,6 +391,7 @@ class SweepSolid {
     return shapePoint;
   }
 
+  // DEPRECATED
   webglDraw(wgl, rows = 50, cols = 50, config = {}) {
     const points = [];
     const normals = [];
@@ -395,6 +419,80 @@ class SweepSolid {
     }
 
     wgl.draw(points, normals, idx, wgl.gl.TRIANGLE_STRIP);
+  }
+
+  setupBuffers(wgl, rows = 50, cols = 50, useCovers = true) {
+    const points = [];
+    const normals = [];
+
+    for (let r = 0; r <= rows; r++) {
+      for (let c = 0; c <= cols; c++) {
+        const u = r / rows;
+        const v = c / cols;
+        const { p, n } = this.point(u, v);
+
+        points.push(...p);
+        normals.push(...n);
+      }
+    }
+
+    const idx = [];
+
+    const getN = (i, j) => j + (cols + 1) * i;
+
+    for (let i = 0; i < rows; i++)
+      for (let j = 0; j <= cols; j++) idx.push(getN(i, j), getN(i + 1, j));
+
+    const pointsBuffer = wgl.createBuffer(points);
+    const normalsBuffer = wgl.createBuffer(normals);
+    const idxBuffer = wgl.createIndexBuffer(idx);
+
+    this.buffers = { pointsBuffer, normalsBuffer, idxBuffer };
+    this.rows = rows;
+    this.cols = cols;
+
+    let covers = undefined;
+    if (useCovers) {
+      const start = this.path.point(0);
+      const end = this.path.point(1);
+      const startBuffers = this.shape
+        .alignTo(start)
+        .getBuffers(wgl, 1 / cols, true);
+      const endBuffers = this.shape
+        .alignTo(end)
+        .getBuffers(wgl, 1 / cols, false);
+      covers = [startBuffers, endBuffers];
+    }
+    this.buffers.covers = covers;
+
+    return this;
+  }
+
+  draw(wgl) {
+    if (!this.buffers) this.setupBuffers(wgl);
+    const { pointsBuffer, normalsBuffer, idxBuffer } = this.buffers;
+    wgl.drawFromBuffers(
+      pointsBuffer,
+      normalsBuffer,
+      idxBuffer,
+      wgl.gl.TRIANGLE_STRIP
+    );
+
+    this.drawCovers(wgl);
+  }
+
+  drawCovers(wgl) {
+    const coverBuffers = this.buffers.covers;
+    if (!coverBuffers) return;
+
+    this.buffers.covers.forEach((buf) => {
+      wgl.drawFromBuffers(
+        buf.points,
+        buf.normals,
+        buf.idx,
+        wgl.gl.TRIANGLE_FAN
+      );
+    });
   }
 }
 

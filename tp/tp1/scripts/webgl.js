@@ -13,11 +13,8 @@ export const setupMatrices = (gl, canvas, glProgram) => {
   let projMatrix = mat4.create();
   let normalMatrix = mat4.create();
 
-  mat4.perspective(projMatrix, 45, canvas.width / canvas.height, 0.1, 100.0);
-  mat4.identity(modelMatrix);
   mat4.rotate(modelMatrix, modelMatrix, -1.57078, [1.0, 0.0, 0.0]);
-  mat4.identity(viewMatrix);
-  mat4.translate(viewMatrix, viewMatrix, [0.0, 0.0, -5.0]);
+  mat4.perspective(projMatrix, 45, canvas.width / canvas.height, 0.1, 100.0);
 
   const modelMatrixUniform = gl.getUniformLocation(glProgram, "modelMatrix");
   const viewMatrixUniform = gl.getUniformLocation(glProgram, "viewMatrix");
@@ -30,7 +27,7 @@ export const setupMatrices = (gl, canvas, glProgram) => {
   gl.uniformMatrix4fv(normalMatrixUniform, false, normalMatrix);
 };
 
-const makeShader = (gl, src, type) => {
+export const makeShader = (gl, src, type) => {
   const shader = gl.createShader(type);
   gl.shaderSource(shader, src);
   gl.compileShader(shader);
@@ -63,51 +60,6 @@ export const initShaders = async (gl) => {
   return glProgram;
 };
 
-export const draw = (gl, glProgram, vertices, normals, indices, mode) => {
-  // Buffers
-  const verticesBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
-  const normalsBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
-
-  const indicesBuffer = gl.createBuffer();
-  indicesBuffer.number_vertex_point = indices.length; // ??
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
-  gl.bufferData(
-    gl.ELEMENT_ARRAY_BUFFER,
-    new Uint16Array(indices),
-    gl.STATIC_DRAW
-  );
-
-  /// WebGL Attributes
-  const vertexPositionAttribute = gl.getAttribLocation(
-    glProgram,
-    "aVertexPosition"
-  );
-  gl.enableVertexAttribArray(vertexPositionAttribute);
-  gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-  gl.vertexAttribPointer(vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
-
-  const vertexNormalAttribute = gl.getAttribLocation(
-    glProgram,
-    "aVertexNormal"
-  );
-  gl.enableVertexAttribArray(vertexNormalAttribute);
-  gl.bindBuffer(gl.ARRAY_BUFFER, normalsBuffer);
-  gl.vertexAttribPointer(vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0);
-
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
-  gl.drawElements(
-    mode,
-    indicesBuffer.number_vertex_point,
-    gl.UNSIGNED_SHORT,
-    0
-  );
-};
-
 export class WebGL {
   constructor(canvasSelector) {
     this.canvas = document.querySelector(canvasSelector);
@@ -138,8 +90,57 @@ export class WebGL {
     this.gl.uniformMatrix4fv(viewMatrixUniform, false, viewMatrix);
   }
 
+  createBuffer = (array) => {
+    const gl = this.gl;
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(array), gl.STATIC_DRAW);
+    return buffer;
+  };
+
+  createIndexBuffer = (array) => {
+    const gl = this.gl;
+    const buffer = gl.createBuffer();
+    buffer.number_vertex_point = array.length;
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
+    gl.bufferData(
+      gl.ELEMENT_ARRAY_BUFFER,
+      new Uint16Array(array),
+      gl.STATIC_DRAW
+    );
+    return buffer;
+  };
+
+  setWglAtt = (name, buffer, size) => {
+    const gl = this.gl;
+    const attribute = gl.getAttribLocation(this.glProgram, name);
+    gl.enableVertexAttribArray(attribute);
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.vertexAttribPointer(attribute, size, gl.FLOAT, false, 0, 0);
+  };
+
+  drawFromBuffers = (verticesBuffer, normalsBuffer, indicesBuffer, mode) => {
+    const gl = this.gl;
+
+    this.setWglAtt("aVertexPosition", verticesBuffer, 3);
+    this.setWglAtt("aVertexNormal", normalsBuffer, 3);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
+    gl.drawElements(
+      mode,
+      indicesBuffer.number_vertex_point,
+      gl.UNSIGNED_SHORT,
+      0
+    );
+  };
+
   draw(vertices, normals, indices, mode) {
-    draw(this.gl, this.glProgram, vertices, normals, indices, mode);
+    // Buffers
+    const verticesBuffer = this.createBuffer(vertices);
+    const normalsBuffer = this.createBuffer(normals);
+    const indicesBuffer = this.createIndexBuffer(indices);
+
+    this.drawFromBuffers(verticesBuffer, normalsBuffer, indicesBuffer, mode);
   }
 
   drawLine = (p1, p2) => {
