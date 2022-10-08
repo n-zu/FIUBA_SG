@@ -13,7 +13,7 @@ export const setupMatrices = (gl, canvas, glProgram) => {
   let projMatrix = mat4.create();
   let normalMatrix = mat4.create();
 
-  mat4.rotate(modelMatrix, modelMatrix, -1.57078, [1.0, 0.0, 0.0]);
+  mat4.rotate(modelMatrix, modelMatrix, -Math.PI / 2, [1.0, 0.0, 0.0]);
   mat4.perspective(projMatrix, 45, canvas.width / canvas.height, 0.1, 100.0);
 
   const modelMatrixUniform = gl.getUniformLocation(glProgram, "modelMatrix");
