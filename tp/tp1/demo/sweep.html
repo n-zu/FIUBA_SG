@@ -14,7 +14,7 @@
       const camera = new CameraControl([0, 0, 10]);
 
       const getCurve = (z) => {
-        const _puntos = [
+        const points = [
           [-2.0, -2.0, z],
           [2.0, -2.0, z],
           [2.0, -2.0, z],
@@ -23,30 +23,54 @@
           [2.0, 2.0, z],
           [2.0, 2.0, z],
           [-2.0, 2.0, z],
+
+          [-6, 2, z],
+          [-6, 2, z],
+          [-6, 0, z],
+
+          [-6, -2, z],
+          [-6, -2, z],
+          [-2, -2, z],
         ];
 
-        const puntos = _puntos; //.reverse();
-
-        const config = {
+        return new Spline(points, {
           normal: [0, 0, 1],
-        };
-
-        return new Spline(puntos, config);
+        });
       };
 
-      const getSurface = (z) => {
-        const droplet_points = [
-          [0.0, 1.0, z],
-          [0.0, 0.0, z],
-          [1.0, -1.0, z],
-          [0.0, -1.0, z],
+      const getCurve2 = () => {
+        const points = [
+          [0, 0, 0],
+          [0, 0, 5],
+          [-2, 0, 5],
+          [-2, 0, 0],
 
-          [-1.0, -1.0, z],
-          [-1.0, 1.0, z],
-          [0.0, 1.0, z],
+          [-2, 0, -5],
+          [3, -3, -5],
+          [3, -3, 0],
+
+          [3, -3, 5],
+          [0, 4, 5],
+          [0, 4, 0],
         ];
 
-        const points = [
+        return new Spline(points, {});
+      };
+
+      const getSurface = (z, circle = false) => {
+        const f = 1.5,
+          r = 1;
+        const circle_points = [
+          [0, r, z],
+          [f * r, r, z],
+          [f * r, -r, z],
+          [0, -r, z],
+          [-f * r, -r, z],
+          [-f * r, r, z],
+          [0, r, z],
+        ];
+
+        const semi_points = [
           [0.0, 1.0, z],
           [1.0, 1.0, z],
           [1.0, -1.0, z],
@@ -66,6 +90,8 @@
           n: mx.vec(0, 1, 0),
           t: mx.vec(0, 0, -1),
         };
+
+        const points = circle ? circle_points : semi_points;
 
         const shape = new Spline(points, config);
         const surface = new Surface(shape, orientation);
@@ -89,18 +115,24 @@
       const surface = getSurface(z);
 
       const solid = new SweepSolid(surface, curve);
-      solid.setupBuffers(wgl, 20, 8);
+      solid.setupBuffers(wgl, 200, 50);
+
+      const curve2 = getCurve2();
+      const surface2 = getSurface(z, true);
+      const solid2 = new SweepSolid(surface2, curve2);
+      solid2.setupBuffers(wgl, 50, 20);
 
       const scanSurface = (from, to, t, factor) => {
         const u = from + ((to - from) * (Math.sin(t / factor) + 1)) / 2;
         drawSurfaceAtCurve(surface, curve, u);
       };
 
-      const drawScene = (t, curves = false, scan = false) => {
-        const mode = wgl.gl.LINE_STRIP && undefined;
+      const drawScene = (t, curves = false, scan = false, s2 = false) => {
+        const mode = wgl.gl.LINE_STRIP;
         solid.draw(wgl, mode);
 
         if (curves) {
+          curve2.webglDraw(wgl, 0.01, 0.05);
           curve.webglDraw(wgl);
           low_curve.webglDraw(wgl);
           high_curve.webglDraw(wgl, 0.01);
@@ -111,6 +143,7 @@
           scanSurface(0.5, 0.8, t, 1000);
           scanSurface(0, 1, t, 1000);
         }
+        if (s2) solid2.draw(wgl, mode);
       };
       drawScene(0, true);
 
@@ -119,7 +152,7 @@
         const viewMatrix = camera.getViewMatrix();
         wgl.setViewMatrix(viewMatrix);
         camera.update();
-        drawScene(t, false, false);
+        drawScene(t, false, false, true);
       };
       tick();
     </script>

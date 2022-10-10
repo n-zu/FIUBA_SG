@@ -53,10 +53,11 @@ export const mx = {
 
     return { matrix, rot };
   },
-  alignVecRot(r, v, _axis = undefined) {
+  alignVecRot(r, v, _axis = undefined, n = [0, 0, 1]) {
     const axis = _axis ?? this.cross(r, v);
     const angle = this.angle(r, v);
     if (!angle) return this.mat();
+    if (mx.len(axis) < 0.5) return this.rotation(Math.PI, n);
 
     let rot = this.rotation(angle, axis);
 
@@ -65,13 +66,13 @@ export const mx = {
 
     return rot;
   },
-  validateAlignRot(vec, ref, rot, maxIter = 1) {
+  validateAlignRot(vec, ref, rot, maxIter = 10, eps = 0.01) {
     if (maxIter <= 0) return rot;
 
     const tn = this.transformed(vec.n, rot);
     const angle = this.angle(ref.n, tn);
 
-    if (angle > 0.01) {
+    if (Math.abs(angle) > eps) {
       const n_rot = this.rotation(-angle, ref.t);
       const rot2 = this.mul(n_rot, rot);
       return this.validateAlignRot(vec, ref, rot2, maxIter - 1);
@@ -80,7 +81,7 @@ export const mx = {
     return rot;
   },
   alignRot(vec, ref) {
-    const t_rot = this.alignVecRot(ref.t, vec.t);
+    const t_rot = this.alignVecRot(ref.t, vec.t, undefined, ref.n);
 
     const n_tr = this.transformed(vec.n, t_rot);
     const n_rot = this.alignVecRot(ref.n, n_tr, ref.t);

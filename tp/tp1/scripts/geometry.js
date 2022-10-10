@@ -369,6 +369,50 @@ class Surface {
   }
 }
 
+class Revolution {
+  constructor(orientation, angle = 2 * Math.PI) {
+    this.orientation = orientation;
+    this.angle = angle;
+    this.transform = { matrix: mx.mat(), rot: mx.mat() };
+  }
+  /*
+  setTransform(transform) {
+    this.transform = transform;
+    return this;
+  }
+
+  getOrientation() {
+    const { p, t, n } = this.orientation;
+    const { matrix, rot } = this.transform;
+    return {
+      p: mx.transformed(p, matrix),
+      t: mx.transformed(t, rot),
+      n: mx.transformed(n, rot),
+    };
+  }
+  */
+  point(u) {
+    const { p, t: _t, n } = this.orientation; //this.getOrientation();
+
+    const angle = this.angle * u;
+    const rot = mx.rotation(angle, n);
+    const t = mx.transformed(_t, rot);
+
+    return { p, t, n };
+  }
+  webglDraw(wgl, delta = 1 / 8) {
+    [0, 1].forEach((u) => {
+      const { p, t } = this.point(u);
+      wgl.drawVec(mx.add(p, mx.scaleVec(t, 0.3)), t, 0.1);
+    });
+    for (let u = 0; u <= 1.001; u = u + delta) {
+      const { p, t, n } = this.point(u);
+      wgl.drawVec(p, t, 0.2);
+      wgl.drawVec(p, n, 0.4);
+    }
+  }
+}
+
 class SweepSolid {
   constructor(shape, path) {
     this.shape = shape;
@@ -491,4 +535,4 @@ class SweepSolid {
   }
 }
 
-export { SegCon, Segment, Spline, Surface, SweepSolid };
+export { SegCon, Segment, Spline, Revolution, Surface, SweepSolid };
