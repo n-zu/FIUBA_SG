@@ -120,7 +120,7 @@
       const curve2 = getCurve2();
       const surface2 = getSurface(z, true);
       const solid2 = new SweepSolid(surface2, curve2);
-      solid2.setupBuffers(wgl, 50, 20);
+      solid2.setupBuffers(wgl, 500, 20);
 
       const scanSurface = (from, to, t, factor) => {
         const u = from + ((to - from) * (Math.sin(t / factor) + 1)) / 2;
@@ -128,7 +128,7 @@
       };
 
       const drawScene = (t, curves = false, scan = false, s2 = false) => {
-        const mode = wgl.gl.LINE_STRIP;
+        const mode = wgl.gl.LINE_STRIP && undefined;
         solid.draw(wgl, mode);
 
         if (curves) {

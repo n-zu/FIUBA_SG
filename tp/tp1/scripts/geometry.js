@@ -1,4 +1,4 @@
-import { mx } from "./util.js";
+import { mx, Transform } from "./util.js";
 
 // Bases
 const B0 = (u) => (1 - u) * (1 - u) * (1 - u);
@@ -184,7 +184,7 @@ class Spline {
 
     this.lengths = lengths.map((l) => l / totalLength);
     this.length = totalLength;
-    this.transform = { matrix: mx.mat(), rot: mx.mat() };
+    this.transform = Transform.identity();
   }
 
   setTransform(transform) {
@@ -217,13 +217,9 @@ class Spline {
 
     const [s, su] = this.mapU(u);
     const { p, t, n } = this.segment(s).point(su);
-    const { matrix, rot } = this.transform;
+    const b = mx.cross(t, n);
 
-    return {
-      p: mx.transform(p, matrix),
-      t: mx.transform(t, rot),
-      n: mx.transform(n, rot),
-    };
+    return this.transform.transforms({ p, t, n, b });
   }
 
   canvasDraw(ctx, showControlQuad = false, vectorDelta) {
@@ -232,35 +228,25 @@ class Spline {
     }
   }
 
-  webglDraw(wgl, delta = 0.01, normalsDelta = undefined) {
+  webglDraw(wgl, delta = 0.01, controlPoints = undefined) {
     // Draw Spline
-    {
-      let points = [];
-      let normals = [];
+    let points = [];
+    let normals = [];
 
-      for (let u = 0; u <= 1.001; u = u + delta) {
-        const { p, n } = this.point(u);
-        points.push(...p);
-        normals.push(...n);
-      }
-      const idx = arrayOf(points.length / 3);
+    for (let u = 0; u <= 1.001; u = u + delta) {
+      const { p, t, n, b } = this.point(u);
+      points.push(...p);
+      normals.push(...n);
 
-      wgl.draw(points, normals, idx, wgl.gl.LINE_STRIP);
-    }
-
-    // Draw Normals
-    if (normalsDelta) {
-      for (let u = 0; u <= 1.001; u = u + normalsDelta) {
-        const { p, n } = this.point(u);
-        const sn = mx.scaled(n, 0.2);
-        const dn = mx.add(sn, p);
-
-        const points = [...p, ...dn];
-        const normals = [...mx.vec(), ...mx.vec()];
-
-        wgl.draw(points, normals, [0, 1], wgl.gl.LINES);
+      if (controlPoints) {
+        wgl.drawVec(p, t, 0.2, [1, 0, 0, 1, 0, 0]);
+        wgl.drawVec(p, n, 0.2, [0, 1, 0, 0, 1, 0]);
+        wgl.drawVec(p, b, 0.2, [0, 0, 1, 0, 0, 1]);
       }
     }
+    const idx = arrayOf(points.length / 3);
+
+    wgl.draw(points, normals, idx, wgl.gl.LINE_STRIP);
   }
 }
 
@@ -281,7 +267,7 @@ class Surface {
       t: [0, 0, -1],
       n: [0, 1, 0],
     };
-    this.transform = { matrix: mx.mat(), rot: mx.mat() };
+    this.transform = Transform.identity();
   }
   setTransform(transform) {
     this.shape.setTransform(transform);
@@ -289,18 +275,15 @@ class Surface {
     return this;
   }
   alignTo(orientation) {
-    const transform = mx.alignMatrix(this.orientation, orientation);
+    if (!orientation.b) orientation.b = mx.cross(orientation.t, orientation.n);
+    const transform = mx.alignTransform(orientation);
     return this.setTransform(transform);
   }
   getOrientation() {
     const { p, t, n } = this.orientation;
-    const { matrix, rot } = this.transform;
+    const b = mx.cross(t, n);
 
-    return {
-      p: mx.transformed(p, matrix),
-      t: mx.transformed(t, rot),
-      n: mx.transformed(n, rot),
-    };
+    return this.transform.transforms({ p, t, n, b });
   }
   shapePoint(u) {
     return this.shape.point(u);
@@ -311,14 +294,16 @@ class Surface {
     stroke: bool (f),
     reverse: bool (f),
     normalsDelta: float,
+    control: bool (f),
   }*/
   webglDraw(wgl, delta = 0.01, config = {}) {
     const fill = config.fill ?? true;
     const stroke = config.stroke ?? false;
     const reverse = config.reverse ?? false;
     const showNormals = config.showNormals ?? undefined;
+    const control = config.control ?? false;
 
-    const { p: center, t: _t } = this.getOrientation();
+    const { p: center, t: _t, n, b } = this.getOrientation();
     const t = reverse ? mx.neg(_t) : _t;
 
     if (stroke) this.shape.webglDraw(wgl, delta, showNormals && delta);
@@ -342,6 +327,11 @@ class Surface {
           wgl.drawVec(p, t, 0.2);
         }
       }
+    }
+    if (control) {
+      wgl.drawVec(center, t, 0.2, [1, 0, 0, 1, 0, 0]);
+      wgl.drawVec(center, n, 0.2, [0, 1, 0, 0, 1, 0]);
+      wgl.drawVec(center, b, 0.2, [0, 0, 1, 0, 0, 1]);
     }
   }
 
@@ -373,24 +363,8 @@ class Revolution {
   constructor(orientation, angle = 2 * Math.PI) {
     this.orientation = orientation;
     this.angle = angle;
-    this.transform = { matrix: mx.mat(), rot: mx.mat() };
+    this.transform = Transform.identity();
   }
-  /*
-  setTransform(transform) {
-    this.transform = transform;
-    return this;
-  }
-
-  getOrientation() {
-    const { p, t, n } = this.orientation;
-    const { matrix, rot } = this.transform;
-    return {
-      p: mx.transformed(p, matrix),
-      t: mx.transformed(t, rot),
-      n: mx.transformed(n, rot),
-    };
-  }
-  */
   point(u) {
     const { p, t: _t, n } = this.orientation; //this.getOrientation();
 
@@ -417,7 +391,7 @@ class SweepSolid {
   constructor(shape, path) {
     this.shape = shape;
     this.path = path;
-    this.transform = { matrix: mx.mat(), rot: mx.mat() };
+    this.transform = Transform.identity();
   }
 
   setTransform(transform) {

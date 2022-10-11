@@ -13,7 +13,7 @@ export const setupMatrices = (gl, canvas, glProgram) => {
   let projMatrix = mat4.create();
   let normalMatrix = mat4.create();
 
-  //mat4.rotate(modelMatrix, modelMatrix, -Math.PI / 2, [1.0, 0.0, 0.0]);
+  mat4.rotate(modelMatrix, modelMatrix, -Math.PI / 2, [1.0, 0.0, 0.0]);
   mat4.perspective(projMatrix, 45, canvas.width / canvas.height, 0.1, 100.0);
 
   const modelMatrixUniform = gl.getUniformLocation(glProgram, "modelMatrix");
@@ -143,14 +143,14 @@ export class WebGL {
     this.drawFromBuffers(verticesBuffer, normalsBuffer, indicesBuffer, mode);
   }
 
-  drawLine = (p1, p2) => {
-    this.draw([...p1, ...p2], [0, 0, 0, 0, 0, 0], [0, 1], this.gl.LINES);
+  drawLine = (p1, p2, normals = [0, 0, 0, 0, 0, 0]) => {
+    this.draw([...p1, ...p2], normals, [0, 1], this.gl.LINES);
   };
 
-  drawVec = (p, dir, len = 1) => {
+  drawVec = (p, dir, len = 1, normals = [0, 0, 0, 0, 0, 0]) => {
     const dir2 = mx.norm(dir);
     mx.scaleVec(dir2, len);
     const p2 = mx.add(p, dir2);
-    this.drawLine(p, p2);
+    this.drawLine(p, p2, normals);
   };
 }

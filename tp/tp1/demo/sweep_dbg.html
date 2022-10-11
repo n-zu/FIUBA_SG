@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sweeping Solid</title>
+    <link rel="icon" href="../assets/sphere.ico" />
+    <script src="../../../lib/gl-matrix-3.3.0.min.js"></script>
+    <script type="module">
+      import { WebGL } from "../scripts/webgl.js";
+      import { mx } from "../scripts/util.js";
+      import { Spline, Surface, SweepSolid } from "../scripts/geometry.js";
+      import { CameraControl } from "../scripts/camera.js";
+
+      const wgl = await new WebGL("#main").init();
+      const camera = new CameraControl([0, 0, 10]);
+
+      const getCurve = (z) => {
+        const points = [
+          [-2.0, -2.0, z],
+          [2.0, -2.0, z],
+          [2.0, -2.0, z],
+          [2.0, 0.0, z],
+
+          [2.0, 2.0, z],
+          [2.0, 2.0, z],
+          [-2.0, 2.0, z],
+        ];
+
+        return new Spline(points, { normal: [0, 0, 1] });
+      };
+
+      const getSurface = (z) => {
+        const points = [
+          [0.0, 1.0, z],
+          [1.0, 1.0, z],
+          [1.0, -1.0, z],
+          [0.0, -1.0, z],
+
+          [0.0, 0.0, z],
+          [0.0, 0.0, z],
+          [0.0, 1.0, z],
+        ];
+
+        const config = {
+          bi_normal: [0, 0, 1],
+        };
+
+        const orientation = {
+          p: mx.vec(0, 0, z),
+          n: mx.vec(0, 1, 0),
+          t: mx.vec(0, 0, -1),
+        };
+
+        const shape = new Spline(points, config);
+        const surface = new Surface(shape, orientation);
+
+        return surface;
+      };
+
+      const drawSurfaceAt = (surface, orientation, delta = 0.01) => {
+        if (orientation) {
+          surface.alignTo(orientation);
+        } else {
+          surface.setTransform({
+            matrix: mx.mat(),
+            rot: mx.mat(),
+          });
+        }
+        surface.webglDraw(wgl, delta, {
+          stroke: true,
+          fill: false,
+          control: true,
+        });
+      };
+
+      const z = 0;
+      const curve = getCurve(z);
+      const surface = getSurface(z);
+      const solid = new SweepSolid(surface, curve);
+      solid.setupBuffers(wgl, 50, 50, false);
+
+      const _drawSurface = (_surface) => {
+        const delta = 0.01;
+        const points = [],
+          normals = [];
+
+        const center = [0, 0, 0];
+        const o = curve.point(0);
+
+        const mat = [
+          ...[o.b[0], o.b[1], o.b[2], 0],
+          ...[o.n[0], o.n[1], o.n[2], 0],
+          ...[o.t[0], o.t[1], o.t[2], 0],
+          ...[o.p[0], o.p[1], o.p[2], 1],
+        ];
+
+        for (let u = 0; u <= 1.001; u += delta) {
+          const { p: _p, t, n, b } = _surface.shapePoint(u);
+          const p = mx.transformed(_p, mat);
+
+          points.push(...p);
+          normals.push(...n);
+        }
+        const idx = [...Array(points.length / 3).keys()];
+        wgl.draw(points, normals, idx, wgl.gl.LINE_STRIP);
+
+        wgl.drawVec(o.p, o.t, 2, [1, 0, 0, 1, 0, 0]);
+        wgl.drawVec(o.p, o.n, 2, [0, 1, 0, 0, 1, 0]);
+        wgl.drawVec(o.p, o.b, 2, [0, 0, 1, 0, 0, 1]);
+      };
+
+      const drawScene = (t) => {
+        const mode = wgl.gl.LINE_STRIP;
+        solid.draw(wgl, mode);
+        //curve.webglDraw(wgl, 0.05, {});
+
+        //drawSurfaceAt(surface);
+        //_drawSurface(surface);
+      };
+
+      const tick = (t) => {
+        requestAnimationFrame(tick);
+        const viewMatrix = camera.getViewMatrix();
+        wgl.setViewMatrix(viewMatrix);
+        camera.update();
+        drawScene(t);
+      };
+      tick();
+    </script>
+  </head>
+  <body>
+    <canvas id="main" width="1000" height="500">
+      Your browser does not support the HTML5 canvas element.
+    </canvas>
+  </body>
+</html>

@@ -1,6 +1,26 @@
 export const vec3 = glMatrix.vec3;
 export const mat4 = glMatrix.mat4;
 
+export class Transform extends Array {
+  static identity() {
+    return new Transform(...mat4.create());
+  }
+
+  rot() {
+    return [...this.slice(0, 4 * 3), 0, 0, 0, 1];
+  }
+
+  transforms({ p, t, n, b }) {
+    const rot = this.rot();
+    return {
+      p: vec3.transformMat4(vec3.create(), p, this),
+      t: vec3.transformMat4(vec3.create(), t, rot),
+      n: vec3.transformMat4(vec3.create(), n, rot),
+      b: vec3.transformMat4(vec3.create(), b, rot),
+    };
+  }
+}
+
 export const mx = {
   // Constructors
   vec: (x = 0, y = 0, z = 0) => vec3.fromValues(x, y, z),
@@ -44,60 +64,16 @@ export const mx = {
   /// Mat
   mul: (a, b) => mat4.multiply(mat4.create(), a, b),
 
-  /// Align
-  _alignMatrix: (vec, ref) => {
-    const matrix = this.mat();
-    this.translate(matrix, this.neg(vec.p));
-    this.apply(matrix, rot);
-    this.translate(matrix, p);
-
-    return { matrix, rot };
-  },
-  alignVecRot(r, v, _axis = undefined, n = [0, 0, 1]) {
-    const axis = _axis ?? this.cross(r, v);
-    const angle = this.angle(r, v);
-    if (!angle) return this.mat();
-    if (mx.len(axis) < 0.5) return this.rotation(Math.PI, n);
-
-    let rot = this.rotation(angle, axis);
-
-    let _v = this.transformed(v, rot);
-    if (this.dot(_v, r) < 0.5) rot = this.rotation(-angle, axis);
-
-    return rot;
-  },
-  validateAlignRot(vec, ref, rot, maxIter = 10, eps = 0.01) {
-    if (maxIter <= 0) return rot;
-
-    const tn = this.transformed(vec.n, rot);
-    const angle = this.angle(ref.n, tn);
-
-    if (Math.abs(angle) > eps) {
-      const n_rot = this.rotation(-angle, ref.t);
-      const rot2 = this.mul(n_rot, rot);
-      return this.validateAlignRot(vec, ref, rot2, maxIter - 1);
-    }
-
-    return rot;
-  },
-  alignRot(vec, ref) {
-    const t_rot = this.alignVecRot(ref.t, vec.t, undefined, ref.n);
-
-    const n_tr = this.transformed(vec.n, t_rot);
-    const n_rot = this.alignVecRot(ref.n, n_tr, ref.t);
-
-    const rot = this.mul(n_rot, t_rot);
-
-    return this.validateAlignRot(vec, ref, rot);
-  },
-  alignMatrix(vec, ref) {
-    const rot = this.alignRot(vec, ref);
-
-    const matrix = this.mat();
-    this.translate(matrix, this.neg(vec.p));
-    this.apply(matrix, rot);
-    this.translate(matrix, ref.p);
-
-    return { matrix, rot };
+  alignTransform(to) {
+    // The element to be alined is always:
+    // - Relative to (0,0,0)
+    // - Tangent = (0,0,-1)
+    // - Normal =  (0,1,0)
+    return new Transform(
+      ...[to.b[0], to.b[1], to.b[2], 0],
+      ...[to.n[0], to.n[1], to.n[2], 0],
+      ...[to.t[0], to.t[1], to.t[2], 0],
+      ...[to.p[0], to.p[1], to.p[2], 1]
+    );
   },
 };
