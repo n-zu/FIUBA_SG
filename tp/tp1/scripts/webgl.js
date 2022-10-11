@@ -1,4 +1,5 @@
 import { mat4, mx } from "./util.js";
+import { default_vertex, default_fragment } from "../shaders/index.js";
 
 export const setup = (gl, canvas) => {
   gl.enable(gl.DEPTH_TEST);
@@ -8,12 +9,11 @@ export const setup = (gl, canvas) => {
 };
 
 export const setupMatrices = (gl, canvas, glProgram) => {
-  let modelMatrix = mat4.create();
-  let viewMatrix = mat4.create();
-  let projMatrix = mat4.create();
-  let normalMatrix = mat4.create();
+  let modelMatrix = mx.mat();
+  let viewMatrix = mx.mat();
+  let projMatrix = mx.mat();
+  let normalMatrix = mx.mat();
 
-  mat4.rotate(modelMatrix, modelMatrix, -Math.PI / 2, [1.0, 0.0, 0.0]);
   mat4.perspective(projMatrix, 45, canvas.width / canvas.height, 0.1, 100.0);
 
   const modelMatrixUniform = gl.getUniformLocation(glProgram, "modelMatrix");
@@ -38,10 +38,23 @@ export const makeShader = (gl, src, type) => {
   return shader;
 };
 
-export const initShaders = async (gl) => {
+const handleFetch = (res) => {
+  if (!res.ok || !res.status == 200) throw new Error("Error fetching resource");
+  return res.text();
+};
+
+export const initShaders = async (
+  gl,
+  vertex_file = "../shaders/vertex.glsl",
+  shader_file = "../shaders/fragment.glsl"
+) => {
   const [vertexSrc, fragmentSrc] = await Promise.all([
-    fetch("../shaders/vertex.glsl").then((res) => res.text()),
-    fetch("../shaders/fragment.glsl").then((res) => res.text()),
+    fetch(vertex_file)
+      .then(handleFetch)
+      .catch(() => default_vertex),
+    fetch(shader_file)
+      .then(handleFetch)
+      .catch(() => default_fragment),
   ]);
 
   const vertexShader = makeShader(gl, vertexSrc, gl.VERTEX_SHADER);
@@ -75,8 +88,8 @@ export class WebGL {
     setup(this.gl, this.canvas);
   }
 
-  async init() {
-    this.glProgram = await initShaders(this.gl);
+  async init(vertex_file, shader_file) {
+    this.glProgram = await initShaders(this.gl, vertex_file, shader_file);
     setupMatrices(this.gl, this.canvas, this.glProgram);
     this.clear();
     return this;
@@ -88,6 +101,38 @@ export class WebGL {
       "viewMatrix"
     );
     this.gl.uniformMatrix4fv(viewMatrixUniform, false, viewMatrix);
+
+    return this;
+  }
+
+  setModelMatrix(modelMatrix) {
+    const modelMatrixUniform = this.gl.getUniformLocation(
+      this.glProgram,
+      "modelMatrix"
+    );
+    this.gl.uniformMatrix4fv(modelMatrixUniform, false, modelMatrix);
+
+    return this;
+  }
+
+  setColor(color) {
+    const modelColor = color ?? [1.0, 0, 1.0];
+
+    const colorUniform = this.gl.getUniformLocation(
+      this.glProgram,
+      "modelColor"
+    );
+    this.gl.uniform3fv(colorUniform, modelColor);
+
+    return this;
+  }
+
+  setUseTexture(bool) {
+    const useTextureUniform = this.gl.getUniformLocation(
+      this.glProgram,
+      "useTexture"
+    );
+    this.gl.uniform1i(useTextureUniform, bool);
   }
 
   createBuffer = (array) => {

@@ -98,7 +98,9 @@ class CameraControl {
     });
   }
 
-  update() {
+  update(wgl) {
+    wgl?.setViewMatrix(this.getViewMatrix());
+
     const { state, rotation, position } = this;
 
     state.xVel += (state.xVelTarget - state.xVel) * InertiaFactor;
