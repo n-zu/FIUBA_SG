@@ -20,6 +20,42 @@ const n_delta = 0.01;
 const arrayOf = (n) => [...Array(n).keys()];
 const repeat = (elem, n) => Array(n).fill(elem);
 
+// Object
+
+export const setup3DBuffers = (obj, wgl, rows, cols) => {
+  const points = [];
+  const normals = [];
+
+  for (let r = 0; r <= rows; r++) {
+    for (let c = 0; c <= cols; c++) {
+      const u = r / rows;
+      const v = c / cols;
+      const { p, n } = obj.point(u, v);
+
+      points.push(...p);
+      normals.push(...n);
+    }
+  }
+
+  const idx = [];
+
+  const getN = (i, j) => j + (cols + 1) * i;
+
+  for (let i = 0; i < rows; i++)
+    for (let j = 0; j <= cols; j++) idx.push(getN(i, j), getN(i + 1, j));
+
+  const pointsBuffer = wgl.createBuffer(points);
+  const normalsBuffer = wgl.createBuffer(normals);
+  const idxBuffer = wgl.createIndexBuffer(idx);
+
+  obj.buffers = { pointsBuffer, normalsBuffer, idxBuffer };
+  obj.rows = rows;
+  obj.cols = cols;
+};
+
+export const setup2DBuffers = (wgl, point, shape, divisions, reverse = false) =>
+  shape.alignTo(point).getBuffers(wgl, 1 / divisions, reverse);
+
 class SegCon {
   static default = () => (u) => default_convexity;
   static convex = () => (u) => 1;
@@ -174,17 +210,31 @@ class Spline {
     let lengths = [];
     let totalLength = 0;
 
-    const segment = (i) => new Segment(controlPoints.slice(i * 3, i * 3 + 4));
+    if (this.config.uniformLength || this.config.rect) {
+      lengths = repeat(1, this.segNum);
+      totalLength = this.segNum;
+    } else {
+      const segment = (i) => new Segment(controlPoints.slice(i * 3, i * 3 + 4));
 
-    for (let s = 0; s < this.segNum; s++) {
-      const segLength = segment(s).length();
-      lengths.push(segLength);
-      totalLength += segLength;
+      for (let s = 0; s < this.segNum; s++) {
+        const segLength = segment(s).length();
+        lengths.push(segLength);
+        totalLength += segLength;
+      }
     }
 
     this.lengths = lengths.map((l) => l / totalLength);
     this.length = totalLength;
     this.transform = Transform.identity();
+  }
+
+  static rect(points, config = {}) {
+    let _points = [points[0], points[1]];
+    for (let i = 1; i < points.length - 1; i++)
+      _points.push(points[i - 1], points[i], points[i + 1]);
+    _points.push(points[points.length - 2], points[points.length - 1]);
+
+    return new Spline(_points, { ...config, rect: true });
   }
 
   setTransform(transform) {
@@ -205,10 +255,12 @@ class Spline {
       u -= this.lengths[s];
       s++;
     }
-
     if (s >= this.segNum) return [this.segNum - 1, 1];
+    let su = u / this.lengths[s];
 
-    return [s, u / this.lengths[s]];
+    if (this.config.rect) su = su > 0.5 ? 1 : 0;
+
+    return [s, su];
   }
 
   point(u) {
@@ -247,6 +299,40 @@ class Spline {
     const idx = arrayOf(points.length / 3);
 
     wgl.draw(points, normals, idx, wgl.gl.LINE_STRIP);
+  }
+}
+
+// TODO: Circle Path
+class Circle {
+  constructor(radius) {}
+  point(u) {}
+}
+
+class Revolution {
+  constructor(orientation, angle = 2 * Math.PI) {
+    this.orientation = orientation;
+    this.angle = angle;
+    this.transform = Transform.identity();
+  }
+  point(u) {
+    const { p, t: _t, n } = this.orientation; //this.getOrientation();
+
+    const angle = this.angle * u;
+    const rot = mx.rotation(angle, n);
+    const t = mx.transformed(_t, rot);
+
+    return { p, t, n };
+  }
+  webglDraw(wgl, delta = 1 / 8) {
+    [0, 1].forEach((u) => {
+      const { p, t } = this.point(u);
+      wgl.drawVec(mx.add(p, mx.scaleVec(t, 0.3)), t, 0.1);
+    });
+    for (let u = 0; u <= 1.001; u = u + delta) {
+      const { p, t, n } = this.point(u);
+      wgl.drawVec(p, t, 0.2);
+      wgl.drawVec(p, n, 0.4);
+    }
   }
 }
 
@@ -359,34 +445,6 @@ class Surface {
   }
 }
 
-class Revolution {
-  constructor(orientation, angle = 2 * Math.PI) {
-    this.orientation = orientation;
-    this.angle = angle;
-    this.transform = Transform.identity();
-  }
-  point(u) {
-    const { p, t: _t, n } = this.orientation; //this.getOrientation();
-
-    const angle = this.angle * u;
-    const rot = mx.rotation(angle, n);
-    const t = mx.transformed(_t, rot);
-
-    return { p, t, n };
-  }
-  webglDraw(wgl, delta = 1 / 8) {
-    [0, 1].forEach((u) => {
-      const { p, t } = this.point(u);
-      wgl.drawVec(mx.add(p, mx.scaleVec(t, 0.3)), t, 0.1);
-    });
-    for (let u = 0; u <= 1.001; u = u + delta) {
-      const { p, t, n } = this.point(u);
-      wgl.drawVec(p, t, 0.2);
-      wgl.drawVec(p, n, 0.4);
-    }
-  }
-}
-
 class SweepSolid {
   constructor(shape, path) {
     this.shape = shape;
@@ -440,48 +498,16 @@ class SweepSolid {
   }
 
   setupBuffers(wgl, rows = 50, cols = 50, useCovers = true) {
-    const points = [];
-    const normals = [];
+    setup3DBuffers(this, wgl, rows, cols);
 
-    for (let r = 0; r <= rows; r++) {
-      for (let c = 0; c <= cols; c++) {
-        const u = r / rows;
-        const v = c / cols;
-        const { p, n } = this.point(u, v);
-
-        points.push(...p);
-        normals.push(...n);
-      }
-    }
-
-    const idx = [];
-
-    const getN = (i, j) => j + (cols + 1) * i;
-
-    for (let i = 0; i < rows; i++)
-      for (let j = 0; j <= cols; j++) idx.push(getN(i, j), getN(i + 1, j));
-
-    const pointsBuffer = wgl.createBuffer(points);
-    const normalsBuffer = wgl.createBuffer(normals);
-    const idxBuffer = wgl.createIndexBuffer(idx);
-
-    this.buffers = { pointsBuffer, normalsBuffer, idxBuffer };
-    this.rows = rows;
-    this.cols = cols;
-
-    let covers = undefined;
+    this.buffers.covers = undefined;
     if (useCovers) {
       const start = this.path.point(0);
       const end = this.path.point(1);
-      const startBuffers = this.shape
-        .alignTo(start)
-        .getBuffers(wgl, 1 / cols, true);
-      const endBuffers = this.shape
-        .alignTo(end)
-        .getBuffers(wgl, 1 / cols, false);
-      covers = [startBuffers, endBuffers];
+      const startBuffers = setup2DBuffers(wgl, start, this.shape, cols);
+      const endBuffers = setup2DBuffers(wgl, end, this.shape, cols, true);
+      this.buffers.covers = [startBuffers, endBuffers];
     }
-    this.buffers.covers = covers;
 
     return this;
   }
@@ -509,4 +535,154 @@ class SweepSolid {
   }
 }
 
-export { SegCon, Segment, Spline, Revolution, Surface, SweepSolid };
+class Cube {
+  constructor(side = 1, top = side) {
+    this.side = side;
+
+    const path = Spline.rect(
+      [
+        [0, -side / 2, 0],
+        [0, side / 2, 0],
+      ],
+      { normal: [0, 0, 1] }
+    );
+
+    const shape = Spline.rect(
+      [
+        [-side / 2, -side / 2, 0],
+        [-top / 2, side / 2, 0],
+        [top / 2, side / 2, 0],
+        [side / 2, -side / 2, 0],
+        [-side / 2, -side / 2, 0],
+      ],
+      {
+        bi_normal: [0, 0, 1],
+      }
+    );
+    const surface = new Surface(shape);
+
+    this.solid = new SweepSolid(surface, path);
+  }
+
+  setupBuffers(wgl) {
+    this.solid.setupBuffers(wgl, 2, 4 * 3);
+    return this;
+  }
+
+  draw(wgl, mode = wgl.gl.TRIANGLE_STRIP) {
+    this.solid.draw(wgl, mode);
+  }
+}
+class Cylinder {
+  constructor(r1 = 1, r2 = r1) {
+    this.r = [r1, r2];
+  }
+
+  point(u, v) {
+    const _v = v > 0.5 ? 1 : 0;
+    const radius = this.r[_v];
+    const rot = mx.rotation(2 * Math.PI * u, [0, 0, 1]);
+
+    const p = [radius, 0, _v - 0.5];
+    mx.transform(p, rot);
+
+    let n = mx.norm([1, 0, this.r[0] - this.r[1]]);
+    mx.transform(n, rot);
+
+    return { p, n };
+  }
+
+  setupCoverBuffers(wgl, divisions = 50) {
+    this.buffers.covers = [];
+    [0, 1].forEach((v) => {
+      const n = [0, 0, 2 * v - 1];
+
+      let points = [...[0, 0, v - 0.5]];
+      let normals = [...n];
+
+      for (let i = 0; i <= divisions; i++) {
+        const u = i / divisions;
+        const { p } = this.point(u, v);
+
+        points.push(...p);
+        normals.push(...n);
+      }
+      const idx = arrayOf(points.length / 3);
+
+      const pointsBuffer = wgl.createBuffer(points);
+      const normalsBuffer = wgl.createBuffer(normals);
+      const idxBuffer = wgl.createIndexBuffer(idx);
+
+      this.buffers.covers.push({
+        v,
+        points: pointsBuffer,
+        normals: normalsBuffer,
+        idx: idxBuffer,
+      });
+    });
+  }
+
+  setupBuffers(wgl, divisions = 50) {
+    setup3DBuffers(this, wgl, divisions, 1);
+    this.setupCoverBuffers(wgl, divisions);
+    return this;
+  }
+
+  draw(wgl, mode = wgl.gl.TRIANGLE_STRIP) {
+    if (!this.buffers) this.setupBuffers(wgl);
+    const { pointsBuffer, normalsBuffer, idxBuffer } = this.buffers;
+    wgl.drawFromBuffers(pointsBuffer, normalsBuffer, idxBuffer, mode);
+    this.drawCovers(wgl);
+  }
+  drawCovers(wgl) {
+    const coverBuffers = this.buffers.covers;
+    if (!coverBuffers) return;
+
+    this.buffers.covers.forEach((buf) => {
+      wgl.drawFromBuffers(
+        buf.points,
+        buf.normals,
+        buf.idx,
+        wgl.gl.TRIANGLE_FAN
+      );
+    });
+  }
+}
+class Sphere {
+  constructor(radius = 1) {
+    this.radius = radius;
+  }
+
+  point(u, v) {
+    let mat = mx.mat();
+
+    mx.translate(mat, [this.radius, 0, 0]);
+    mx.rotate(mat, Math.PI * (0.5 - v), [0, 0, 1]);
+    mx.rotate(mat, 2 * Math.PI * u, [0, 1, 0]);
+
+    const p = mx.vec();
+    mx.transform(p, mat);
+
+    return { p, n: mx.norm(p) };
+  }
+
+  setupBuffers(wgl, rows = 50, cols = 50) {
+    setup3DBuffers(this, wgl, rows, cols);
+    return this;
+  }
+
+  draw(wgl, mode = wgl.gl.TRIANGLE_STRIP) {
+    if (!this.buffers) this.setupBuffers(wgl);
+    const { pointsBuffer, normalsBuffer, idxBuffer } = this.buffers;
+    wgl.drawFromBuffers(pointsBuffer, normalsBuffer, idxBuffer, mode);
+  }
+}
+
+// Paths
+export { SegCon, Segment, Spline, Revolution };
+
+// Shapes
+export { Surface, SweepSolid };
+
+// Prefabs
+export { Cube, Cylinder, Sphere };
