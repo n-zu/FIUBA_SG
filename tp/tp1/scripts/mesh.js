@@ -31,7 +31,7 @@ class Mesh {
       this.geometry.draw(wgl);
     }
 
-    this.children.forEach((child) => child.draw(wgl, transform));
+    this.children.forEach((child) => child?.draw(wgl, transform));
   }
 }
 

@@ -310,7 +310,11 @@ class Circle {
 
 class Revolution {
   constructor(orientation, angle = 2 * Math.PI) {
-    this.orientation = orientation;
+    this.orientation = orientation ?? {
+      p: [0, 0, 0],
+      n: [0, 1, 0],
+      t: [1, 0, 0],
+    };
     this.angle = angle;
   }
   point(u) {

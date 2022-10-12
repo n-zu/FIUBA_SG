@@ -81,6 +81,8 @@ export class WebGL {
     this.gl = this.canvas.getContext("webgl");
     if (!this.gl) throw new Error("WebGL not supported");
 
+    this.drawSurfaces = true;
+
     this.clear();
   }
 
@@ -116,6 +118,12 @@ export class WebGL {
   }
 
   setColor(color) {
+    this.color = color;
+    this._setColor(color);
+
+    return this;
+  }
+  _setColor(color) {
     const modelColor = color ?? [1.0, 0, 1.0];
 
     const colorUniform = this.gl.getUniformLocation(
@@ -123,8 +131,6 @@ export class WebGL {
       "modelColor"
     );
     this.gl.uniform3fv(colorUniform, modelColor);
-
-    return this;
   }
 
   setUseTexture(bool) {
@@ -133,6 +139,7 @@ export class WebGL {
       "useTexture"
     );
     this.gl.uniform1i(useTextureUniform, bool);
+    return this;
   }
 
   createBuffer = (array) => {
@@ -166,17 +173,29 @@ export class WebGL {
 
   drawFromBuffers = (verticesBuffer, normalsBuffer, indicesBuffer, mode) => {
     const gl = this.gl;
+    const nvp = indicesBuffer.number_vertex_point;
 
     this.setWglAtt("aVertexPosition", verticesBuffer, 3);
     this.setWglAtt("aVertexNormal", normalsBuffer, 3);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
-    gl.drawElements(
-      mode,
-      indicesBuffer.number_vertex_point,
-      gl.UNSIGNED_SHORT,
-      0
-    );
+
+    if (this.drawSurfaces) gl.drawElements(mode, nvp, gl.UNSIGNED_SHORT, 0);
+
+    if (this.drawLines) {
+      this._setColor([0.4, 0.4, 0.4]);
+      gl.drawElements(this.gl.LINE_STRIP, nvp, gl.UNSIGNED_SHORT, 0);
+      this._setColor(this.color);
+    }
+  };
+
+  setDrawLines = (bool) => {
+    this.drawLines = bool;
+    return this;
+  };
+  setDrawSurfaces = (bool) => {
+    this.drawSurfaces = bool;
+    return this;
   };
 
   draw(vertices, normals, indices, mode) {
