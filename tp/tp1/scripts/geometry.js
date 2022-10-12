@@ -312,7 +312,6 @@ class Revolution {
   constructor(orientation, angle = 2 * Math.PI) {
     this.orientation = orientation;
     this.angle = angle;
-    this.transform = Transform.identity();
   }
   point(u) {
     const { p, t: _t, n } = this.orientation; //this.getOrientation();
