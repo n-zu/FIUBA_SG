@@ -97,22 +97,21 @@ export class WebGL {
     return this;
   }
 
-  setViewMatrix(viewMatrix) {
-    const viewMatrixUniform = this.gl.getUniformLocation(
-      this.glProgram,
-      "viewMatrix"
-    );
-    this.gl.uniformMatrix4fv(viewMatrixUniform, false, viewMatrix);
+  setMatrix(name, matrix) {
+    const matrixUniform = this.gl.getUniformLocation(this.glProgram, name);
+    this.gl.uniformMatrix4fv(matrixUniform, false, matrix);
+  }
 
+  setViewMatrix(viewMatrix) {
+    this.setMatrix("viewMatrix", viewMatrix);
     return this;
   }
 
   setModelMatrix(modelMatrix) {
-    const modelMatrixUniform = this.gl.getUniformLocation(
-      this.glProgram,
-      "modelMatrix"
-    );
-    this.gl.uniformMatrix4fv(modelMatrixUniform, false, modelMatrix);
+    this.setMatrix("modelMatrix", modelMatrix);
+
+    const normalMatrix = [...modelMatrix.slice(0, 4 * 3), 0, 0, 0, 1];
+    this.setMatrix("normalMatrix", normalMatrix);
 
     return this;
   }

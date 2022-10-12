@@ -15,7 +15,6 @@ void main(void) {
 */
 
   vec3 normalColor = vec3(0.5, 0.5, 0.5) + 0.5 * vNormal;
-  // vec3 yColor = vec3(0.5, 0.5, 0.5) + vec3(0.0, 0.5, 0.0) * vNormal.y;
 
   if ( useTexture ) {
     gl_FragColor = vec4(modelColor, 1.0);
