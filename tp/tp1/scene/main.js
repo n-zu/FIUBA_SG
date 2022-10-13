@@ -2,22 +2,24 @@ import { WebGL } from "../scripts/webgl.js";
 import { Mesh, Transform } from "../scripts/mesh.js";
 import { Cube, Cylinder, Sphere } from "../scripts/geometry.js";
 import { CameraControl } from "../scripts/camera.js";
-import { Terrain } from "./components/index.js";
+import { Terrain, Walls } from "./components/index.js";
 
 const wgl = await new WebGL("#main").init(
   "./shaders/vertex.glsl",
   "./shaders/fragment.glsl"
 );
-wgl.setUseTexture(1).setDrawLines(true).setDrawSurfaces(true);
+wgl.setUseTexture(true).setDrawLines(true).setDrawSurfaces(true);
 const camera = new CameraControl([0, 0, 10]);
 
 const cube = new Cube(1).setupBuffers(wgl);
 const cylinder = new Cylinder().setupBuffers(wgl);
 const sphere = new Sphere().setupBuffers(wgl);
 
-const center = new Mesh(["center", cube], [Transform.scale([0.1, 1, 0.1])]);
 const terrain = Terrain(wgl);
+const walls = Walls(wgl);
 
+// ----------------------------------------
+const center = new Mesh(["center", cube], [Transform.scale([0.1, 1, 0.1])]);
 const state = {};
 function getRotatingArm(t) {
   if (!state.arm)
@@ -37,9 +39,10 @@ function getRotatingArm(t) {
     [state.arm, state.ball]
   );
 }
+// ----------------------------------------
 
 const getScene = (t) =>
-  new Mesh(["root"], null, [center, terrain, getRotatingArm(t)]);
+  new Mesh(["root"], null, [center, terrain, walls, getRotatingArm(t)]);
 
 const drawScene = (t) => {
   getScene(t / 1000).draw(wgl);
