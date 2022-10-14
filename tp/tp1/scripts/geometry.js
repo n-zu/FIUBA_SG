@@ -115,9 +115,7 @@ class Segment {
       dB0(u) * p0[2] + dB1(u) * p1[2] + dB2(u) * p2[2] + dB3(u) * p3[2],
     ];
 
-    const mod_dp = Math.sqrt(dp[0] * dp[0] + dp[1] * dp[1] + dp[2] * dp[2]);
-
-    const tangent = [dp[0] / mod_dp, dp[1] / mod_dp, dp[2] / mod_dp];
+    const tangent = mx.norm(dp);
 
     // Normal
     let bi_normal;

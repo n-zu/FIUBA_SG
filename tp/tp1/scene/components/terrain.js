@@ -37,7 +37,10 @@ const getFloorGeometry = (wgl) => {
   );
 };
 
+let cache = undefined;
 const Terrain = (wgl) => {
+  if (cache) return cache;
+
   const cube = new Cube(1).setupBuffers(wgl);
   const cyl = new Cylinder(10, 8).setupBuffers(wgl, 30);
   const color = {
@@ -72,6 +75,7 @@ const Terrain = (wgl) => {
   );
 
   const terrain = new Mesh(["Terrain"], null, [center, bridge, floor, water]);
+  cache = terrain;
 
   return terrain;
 };

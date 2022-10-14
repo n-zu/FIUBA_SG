@@ -15,5 +15,5 @@ void main(void) {
   gl_Position = projMatrix * viewMatrix * modelMatrix * vec4(aVertexPosition, 1.0);
 
   vPosWorld=(modelMatrix*vec4(aVertexPosition,1.0)).xyz;
-  vNormal=(normalMatrix*vec4(aVertexNormal,1.0)).xyz;
+  vNormal=normalize((normalMatrix*vec4(aVertexNormal,1.0)).xyz);
 }
