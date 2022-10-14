@@ -8,7 +8,12 @@ const wgl = await new WebGL("#main").init(
   "./shaders/vertex.glsl",
   "./shaders/fragment.glsl"
 );
-wgl.setUseTexture(true).setDrawLines(true).setDrawSurfaces(true);
+wgl
+  .setUseTexture(!settings.normals)
+  .setDrawLines(settings.lines)
+  .setDrawSurfaces(true);
+
+settings.wgl = wgl;
 const camera = new CameraControl([0, 0, 10]);
 
 const cube = new Cube(1).setupBuffers(wgl);
@@ -17,7 +22,7 @@ const sphere = new Sphere().setupBuffers(wgl);
 
 const terrain = Terrain(wgl);
 const getWalls = () =>
-  Walls(wgl, glob.wall_number, glob.wall_height, glob.wall_angle);
+  Walls(wgl, settings.wall_number, settings.wall_height, settings.wall_angle);
 
 // ----------------------------------------
 const center = new Mesh(["center", cube], [Transform.scale([0.1, 1, 0.1])]);
@@ -36,7 +41,11 @@ function getRotatingArm(t) {
 
   return new Mesh(
     ["rotating arm"],
-    [Transform.translate([0, 0.3, 0]), Transform.rotate([t, [0, 1, 0]])],
+    [
+      Transform.translate([0, 0.3, 0]),
+      Transform.rotate([1, [1, 0, 0]]),
+      Transform.rotate([5 * t, [0, 1, 0]]),
+    ],
     [state.arm, state.ball]
   );
 }

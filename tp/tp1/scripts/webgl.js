@@ -110,6 +110,12 @@ export class WebGL {
   setModelMatrix(modelMatrix) {
     this.setMatrix("modelMatrix", modelMatrix);
 
+    // FIXME:
+    // Translations are removed
+    // But scalings are not
+    // I think normalizing this in the shader is ok
+    // But I'm not sure
+    // Check the class / asks prof
     const normalMatrix = [...modelMatrix.slice(0, 4 * 3), 0, 0, 0, 1];
     this.setMatrix("normalMatrix", normalMatrix);
 
