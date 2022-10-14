@@ -165,7 +165,7 @@ const getWallSurface = (height) => {
 
   const shape = new Spline(points, {
     bi_normal: [0, 0, 1],
-    //uniformLength: true,
+    uniformLength: true,
   });
   const surface = new Surface(shape);
 
@@ -265,6 +265,7 @@ const initiate = (wgl, number, height, angle) => {
   }
 
   glob_geometry.points = getPoints(number, _radius);
+  glob_geometry.angle = angle;
 
   if (!glob_geometry.initiated || h_dif >= 0.01) {
     glob_geometry.height = height;
