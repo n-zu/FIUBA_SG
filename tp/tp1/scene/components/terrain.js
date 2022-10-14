@@ -28,7 +28,7 @@ const getSurface = () => {
 };
 const getFloorGeometry = (wgl) => {
   const rev = new Revolution();
-  const surface = getSurface(0, 0, 0);
+  const surface = getSurface();
   return new SweepSolid(surface, rev).setupBuffers(
     wgl,
     8,

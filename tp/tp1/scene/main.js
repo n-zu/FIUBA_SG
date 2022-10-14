@@ -16,7 +16,7 @@ const cylinder = new Cylinder().setupBuffers(wgl);
 const sphere = new Sphere().setupBuffers(wgl);
 
 const terrain = Terrain(wgl);
-const walls = Walls(wgl);
+const getWalls = () => Walls(wgl);
 
 // ----------------------------------------
 const center = new Mesh(["center", cube], [Transform.scale([0.1, 1, 0.1])]);
@@ -41,8 +41,10 @@ function getRotatingArm(t) {
 }
 // ----------------------------------------
 
+console.log("global", glob);
+
 const getScene = (t) =>
-  new Mesh(["root"], null, [center, terrain, walls, getRotatingArm(t)]);
+  new Mesh(["root"], null, [center, terrain, getWalls(), getRotatingArm(t)]);
 
 const drawScene = (t) => {
   getScene(t / 1000).draw(wgl);

@@ -14,10 +14,11 @@ void main(void) {
   vec3 color=dot(lightVec,vNormal)*diffColor+vec3(0.2,0.2,0.2);
 */
 
-  vec3 normalColor = vec3(0.5, 0.5, 0.5) + 0.5 * vNormal;
+  vec3 normalColor = vec3(0.5, 0.5, 0.5) + 0.5 * normalize(vNormal);
+  float lightFactor = 0.7 + 0.1*vNormal.y + 0.1 * vNormal.z + 0.1 * vNormal.x; 
 
   if ( useTexture ) {
-    gl_FragColor = vec4(modelColor, 1.0);
+    gl_FragColor = vec4(modelColor*lightFactor, 1.0);
   } else {
     gl_FragColor = vec4(normalColor, 1.0);
   }
