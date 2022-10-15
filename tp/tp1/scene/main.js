@@ -2,7 +2,7 @@ import { WebGL } from "../scripts/webgl.js";
 import { Mesh, Transform } from "../scripts/mesh.js";
 import { Cube, Cylinder, Sphere } from "../scripts/geometry.js";
 import { CameraControl } from "../scripts/camera.js";
-import { Terrain, Walls } from "./components/index.js";
+import { Terrain, Walls, Castle } from "./components/index.js";
 
 const wgl = await new WebGL("#main").init(
   "./shaders/vertex.glsl",
@@ -23,6 +23,13 @@ const sphere = new Sphere().setupBuffers(wgl);
 const terrain = Terrain(wgl);
 const getWalls = () =>
   Walls(wgl, settings.wall_number, settings.wall_height, settings.wall_angle);
+const getCastle = () =>
+  Castle(
+    wgl,
+    settings.castle_width,
+    settings.castle_length,
+    settings.castle_floors
+  );
 
 // ----------------------------------------
 const center = new Mesh(["center", cube], [Transform.scale([0.1, 1, 0.1])]);
@@ -52,7 +59,13 @@ function getRotatingArm(t) {
 // ----------------------------------------
 
 const getScene = (t) =>
-  new Mesh(["root"], null, [center, terrain, getWalls(), getRotatingArm(t)]);
+  new Mesh(["root"], null, [
+    center,
+    terrain,
+    getWalls(),
+    getCastle(),
+    getRotatingArm(t),
+  ]);
 
 const drawScene = (t) => {
   getScene(t / 1000).draw(wgl);

@@ -8,11 +8,7 @@ import {
 } from "../../scripts/geometry.js";
 import { mx } from "../../scripts/util.js";
 
-const color = {
-  wall: [0.5, 0.5, 0.5],
-  wood: [0.7, 0.5, 0.1],
-};
-
+const color = settings.color;
 var glob_geometry = {};
 
 const _radius = 7;
@@ -276,7 +272,7 @@ const initiate = (wgl, number, height, angle) => {
   }
   glob_geometry.walls = getWallGeometry(wgl, glob_geometry.points, height);
 
-  glob_geometry.cube = new Cube(1).setupBuffers(wgl);
+  glob_geometry.cube = new Cube().setupBuffers(wgl);
   glob_geometry.initiated = true;
 
   return true;

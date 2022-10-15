@@ -8,6 +8,8 @@ import {
   SweepSolid,
 } from "../../scripts/geometry.js";
 
+const color = settings.color;
+
 const getSurface = () => {
   const x1 = 15;
   const x2 = 30;
@@ -43,10 +45,6 @@ const Terrain = (wgl) => {
 
   const cube = new Cube(1).setupBuffers(wgl);
   const cyl = new Cylinder(10, 8).setupBuffers(wgl, 30);
-  const color = {
-    grass: [0.5, 0.8, 0.5],
-    water: [0.5, 0.5, 0.8],
-  };
 
   const center = new Mesh(
     ["center", cyl, color.grass],

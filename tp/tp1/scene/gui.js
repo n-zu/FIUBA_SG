@@ -11,6 +11,7 @@ general.add(settings, "normals").name("Color normals").onChange(setNormals);
 general.add(settings, "lines").name("Draw lines").onChange(setLines);
 
 general.open();
+
 // Wall
 const wall = gui.addFolder("Wall");
 
@@ -19,14 +20,12 @@ wall.add(settings, "wall_height", 1, 5, 0.5).name("Height of walls");
 wall.add(settings, "wall_angle", 0, 90, 1).name("Angle of the gate");
 
 wall.open();
-/*
-var f3 = gui.addFolder("Parametros Especiales ");
-f3.add(app, "umbral", 0.0, 200.0).name("umbral");
-f3.add(app, "samples", 0, 30)
-.name("samples")
-.onChange(function (v) {
-  console.log(" cambio el valor de app.samples a " + v);
-});
 
-f2.open();
-f3.open();*/
+// Castle
+const castle = gui.addFolder("Castle");
+
+castle.add(settings, "castle_width", 2, 8, 0.5).name("Width");
+castle.add(settings, "castle_length", 2, 8, 0.5).name("Length");
+castle.add(settings, "castle_floors", 1, 10, 1).name("Floors");
+
+castle.open();
