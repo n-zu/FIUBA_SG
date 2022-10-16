@@ -17,5 +17,6 @@ var settings = {
     water: [0.5, 0.5, 0.8],
     castle: [0.9, 0.9, 0.6],
     window: [0.2, 0.2, 0.2],
+    tower_tip: [0.2, 0.2, 0.5],
   },
 };
