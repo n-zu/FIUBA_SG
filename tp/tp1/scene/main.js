@@ -2,7 +2,7 @@ import { WebGL } from "../scripts/webgl.js";
 import { Mesh, Transform } from "../scripts/mesh.js";
 import { Cube, Cylinder, Sphere } from "../scripts/geometry.js";
 import { CameraControl } from "../scripts/camera.js";
-import { Terrain, Walls, Castle } from "./components/index.js";
+import { Terrain, Walls, Castle, Catapult } from "./components/index.js";
 
 const wgl = await new WebGL("#main").init(
   "./shaders/vertex.glsl",
@@ -26,6 +26,7 @@ const getCastle = () =>
     settings.castle_length,
     settings.castle_floors
   );
+const getCatapult = () => Catapult(wgl);
 
 // ----------------------------------------
 const cylinder = new Cylinder().setupBuffers(wgl);
@@ -58,6 +59,7 @@ const getScene = (t) =>
     getWalls(),
     getCastle(),
     getRotatingArm(t),
+    getCatapult(),
   ]);
 
 const drawScene = (t) => {

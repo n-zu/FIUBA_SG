@@ -13,6 +13,7 @@ var settings = {
   color: {
     wall: [0.5, 0.5, 0.5],
     wood: [0.7, 0.5, 0.1],
+    dark_wood: [0.4, 0.3, 0.1],
     grass: [0.5, 0.8, 0.5],
     water: [0.5, 0.5, 0.8],
     castle: [0.9, 0.9, 0.6],
