@@ -26,7 +26,13 @@ const getCastle = () =>
     settings.castle_length,
     settings.castle_floors
   );
-const getCatapult = () => Catapult(wgl);
+const getCatapult = () =>
+  Catapult(
+    wgl,
+    settings.catapult_rotation,
+    settings.catapult_arm_rotation,
+    settings.catapult_ammo
+  );
 
 // ----------------------------------------
 const cylinder = new Cylinder().setupBuffers(wgl);

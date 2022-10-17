@@ -10,8 +10,13 @@ var settings = {
   castle_length: 4,
   castle_floors: 3,
 
+  catapult_rotation: 0,
+  catapult_arm_rotation: 0,
+  catapult_ammo: true,
+
   color: {
     wall: [0.5, 0.5, 0.5],
+    stone: [0.5, 0.5, 0.5],
     wood: [0.7, 0.5, 0.1],
     dark_wood: [0.4, 0.3, 0.1],
     grass: [0.5, 0.8, 0.5],

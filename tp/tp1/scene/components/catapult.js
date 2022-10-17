@@ -12,6 +12,8 @@ import {
 const color = settings.color;
 var glob_geometry = {};
 
+const rad = (deg) => (deg * Math.PI) / 180;
+
 const base_width = 1;
 const base_length = 2.5;
 const base_height = 1.1;
@@ -69,7 +71,6 @@ const getWheels = (wgl) => {
   );
   return [wheel1, wheel2, wheel3, wheel4];
 };
-
 const getShafts = (wgl) => {
   const shaft = new Cylinder(0.025).setupBuffers(wgl);
   const shaft1 = new Mesh(
@@ -141,6 +142,129 @@ const getCrossbar = (wgl) => {
   return crossbar;
 };
 
+const setupArm = (wgl) => {
+  const path = Spline.rect(
+    [
+      [-0.1, 0, 0],
+      [0.1, 0, 0],
+    ],
+    { normal: [0, 1, 0] }
+  );
+
+  const shape = Spline.rect(
+    [
+      [-0.75, 0.1, 0],
+      [2, 0.1, 0],
+      [2, 0, 0],
+      [-0.75, -0.05, 0],
+      [-0.75, 0.1, 0],
+    ],
+    {
+      bi_normal: [0, 0, 1],
+    }
+  );
+  const surface = new Surface(shape);
+  const geo = new SweepSolid(surface, path).setupBuffers(wgl, 2, 4 * 3);
+
+  glob_geometry.arm = geo;
+
+  const cube = new Cube().setupBuffers(wgl);
+  glob_geometry.shovel = new Mesh(
+    ["shovel", cube, color.wood],
+    [Transform.scale([0.5, 0.075, 0.7]), Transform.translate([0, 0.1, 2])]
+  );
+
+  const cyl = new Cylinder(0.025).setupBuffers(wgl);
+  glob_geometry.arm_shaft = new Mesh(
+    ["arm_shaft", cyl, color.dark_wood],
+    [
+      Transform.scale([1, 1, 0.4]),
+      Transform.rotate([Math.PI / 2, [0, 1, 0]]),
+      Transform.translate([0, 0.025, -0.65]),
+    ]
+  );
+
+  const sphere = new Sphere(0.2).setupBuffers(wgl);
+  glob_geometry.ammo = new Mesh(
+    ["ammo", sphere, color.stone],
+    [Transform.translate([0, 0.3 + 0.075 / 2, 2])]
+  );
+};
+
+const setupWeight = (wgl) => {
+  const side = 0.05;
+  const w = [0.2, 0.08];
+  const h = [-0.15, 0.05];
+  const path = Spline.rect(
+    [
+      [-side / 2, 0, 0],
+      [side / 2, 0, 0],
+    ],
+    { normal: [0, 1, 0] }
+  );
+
+  const shape = Spline.rect(
+    [
+      [-w[0] / 2, h[0], 0],
+      [-w[1] / 2, h[1], 0],
+      [w[1] / 2, h[1], 0],
+      [w[0] / 2, h[0], 0],
+      [-w[0] / 2, h[0], 0],
+    ],
+    {
+      bi_normal: [0, 0, 1],
+    }
+  );
+  const surface = new Surface(shape);
+  const geo = new SweepSolid(surface, path).setupBuffers(wgl, 2, 4 * 3);
+
+  const side1 = new Mesh(
+    ["side1", geo, color.wood],
+    [Transform.translate([0.15, 0, 0])]
+  );
+  const side2 = new Mesh(
+    ["side1", geo, color.wood],
+    [Transform.translate([-0.15, 0, 0])]
+  );
+
+  const cube = new Cube().setupBuffers(wgl);
+  const weight = new Mesh(
+    ["weight", cube, color.stone],
+    [
+      Transform.scale([0.5, 0.3, 0.35]),
+      Transform.translate([0, -0.15 - 0.15, 0]),
+    ]
+  );
+
+  glob_geometry.weight_children = [side1, side2, weight];
+};
+const getWeight = (rotation = 0) => {
+  return new Mesh(
+    ["weight"],
+    [
+      Transform.rotate([rad(-rotation), [1, 0, 0]]),
+      Transform.translate([0, 0.025, -0.65]),
+    ],
+    glob_geometry.weight_children
+  );
+};
+
+const getArm = (rotation = 0, ammo = true) => {
+  return new Mesh(
+    ["arm", glob_geometry.arm, color.wood],
+    [
+      Transform.rotate([rad(rotation), [1, 0, 0]]),
+      Transform.translate([0, base_height, base_offset]),
+    ],
+    [
+      glob_geometry.shovel,
+      glob_geometry.arm_shaft,
+      getWeight(rotation),
+      ammo ? glob_geometry.ammo : null,
+    ]
+  );
+};
+
 const initiate = (wgl) => {
   if (glob_geometry.initiated) return;
   glob_geometry.initiated = true;
@@ -166,13 +290,25 @@ const initiate = (wgl) => {
     ...sides,
     crossbar,
   ]);
+
+  setupArm(wgl);
+  setupWeight(wgl);
 };
 
-const Catapult = (wgl, rotation) => {
+const Catapult = (wgl, rotation, arm_rotation, ammo) => {
   initiate(wgl);
   const base = glob_geometry.base;
+  const arm = getArm(arm_rotation, ammo);
 
-  return new Mesh(["catapult"], [Transform.translate([0, 0, 8])], [base]);
+  return new Mesh(
+    ["arm_rotation"],
+    [
+      Transform.rotate([rad(rotation), [0, 1, 0]]),
+      Transform.translate([0, 0, 17]),
+      Transform.rotate([rad(-20), [0, 1, 0]]),
+    ],
+    [base, arm]
+  );
 };
 
 export default Catapult;
