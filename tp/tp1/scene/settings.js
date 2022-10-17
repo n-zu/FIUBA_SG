@@ -11,8 +11,9 @@ var settings = {
   castle_floors: 3,
 
   catapult_rotation: 0,
-  catapult_arm_rotation: 0,
+  catapult_arm_rotation: 25,
   catapult_ammo: true,
+  catapult_shoot: () => {},
 
   color: {
     wall: [0.5, 0.5, 0.5],
