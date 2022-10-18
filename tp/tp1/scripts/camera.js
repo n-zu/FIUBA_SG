@@ -20,7 +20,7 @@ const InitialState = {
   xRotVel: 0,
 };
 
-class CameraControl {
+class FreeCamera {
   constructor(initialPosition = [0, 0, 0]) {
     this.initialPosition = [...initialPosition];
     this.position = initialPosition;
@@ -150,6 +150,124 @@ class CameraControl {
     mat4.invert(m, m);
     return m;
   }
+
+  cleanup() {
+    document.removeEventListener("keydown", this.keyDownListener);
+    document.removeEventListener("keyup", this.keyUpListener);
+  }
 }
 
-export { CameraControl };
+class OrbitalCamera {
+  constructor(lookAt = [0, 0, 0], initialOffset = [0, 2, 15]) {
+    this.lookAt = lookAt;
+    this.position = mx.add(lookAt, initialOffset);
+    this.up = [0, 1, 0];
+    this.side = [1, 0, 0];
+
+    this.state = {
+      x: 0,
+      y: initialOffset[1],
+      z: initialOffset[2],
+      u: 0,
+      v: 0,
+      du: 0,
+      dv: 0,
+      dz: 0,
+    };
+
+    this.setupListeners();
+  }
+
+  setTarget(target) {
+    this.lookAt = target;
+  }
+
+  setupListeners() {
+    this.keyDownListener = document.addEventListener("keydown", (e) => {
+      const vel = 0.01;
+      const z_vel = 0.08;
+      switch (e.key) {
+        case "ArrowUp":
+        case "w":
+          this.state.dv = vel;
+          break;
+        case "ArrowDown":
+        case "s":
+          this.state.dv = -vel;
+          break;
+
+        case "ArrowLeft":
+        case "a":
+          this.state.du = vel;
+          break;
+        case "ArrowRight":
+        case "d":
+          this.state.du = -vel;
+          break;
+        case "e":
+          this.state.dz = -z_vel;
+          break;
+        case "q":
+          this.state.dz = z_vel;
+          break;
+      }
+    });
+    this.keyUpListener = document.addEventListener("keyup", (e) => {
+      switch (e.key) {
+        case "ArrowUp":
+        case "w":
+        case "ArrowDown":
+        case "s":
+          this.state.dv = 0;
+          break;
+
+        case "ArrowLeft":
+        case "a":
+        case "ArrowRight":
+        case "d":
+          this.state.du = 0;
+          break;
+
+        case "e":
+        case "q":
+          this.state.dz = 0;
+      }
+    });
+  }
+
+  updatePosition() {
+    const { du, dv, dz } = this.state;
+    this.state.u += du;
+    this.state.v += dv;
+    this.state.z += dz;
+
+    if (this.state.v > 1) this.state.v = 1;
+    if (this.state.v < -0.5) this.state.v = -0.5;
+    if (this.state.z < 2) this.state.z = 2;
+
+    const transform = mx.mat();
+    mx.rotate(transform, -this.state.v, this.side);
+    mx.rotate(transform, -this.state.u, this.up);
+
+    const position = [0, this.state.y, this.state.z];
+    mx.transform(position, transform);
+
+    this.position = mx.add(position, this.lookAt);
+  }
+
+  update(wgl) {
+    this.updatePosition();
+    wgl?.setViewMatrix(this.getViewMatrix());
+  }
+
+  getViewMatrix() {
+    return mat4.lookAt(mat4.create(), this.position, this.lookAt, this.up);
+  }
+
+  cleanup() {
+    document.removeEventListener("keydown", this.keyDownListener);
+    document.removeEventListener("keyup", this.keyUpListener);
+  }
+}
+
+export { FreeCamera, OrbitalCamera };

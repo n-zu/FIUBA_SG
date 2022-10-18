@@ -1,7 +1,7 @@
 import { WebGL } from "../scripts/webgl.js";
-import { Mesh, Transform } from "../scripts/mesh.js";
-import { Cylinder, Sphere } from "../scripts/geometry.js";
-import { CameraControl } from "../scripts/camera.js";
+import { Mesh } from "../scripts/mesh.js";
+import { updateCamera } from "./camera.js";
+
 import { Terrain, Walls, Castle, Catapult } from "./components/index.js";
 import { update as update_anim, animation_meshes } from "./animation.js";
 
@@ -15,7 +15,6 @@ wgl
   .setDrawSurfaces(true);
 
 settings.wgl = wgl;
-const camera = new CameraControl([0, 0, 10]);
 
 const terrain = Terrain(wgl);
 const getWalls = () =>
@@ -36,6 +35,7 @@ const getCatapult = () => {
     settings.catapult_ammo
   );
   settings.getAmmoTransform = catapult.getAmmoTransform;
+  settings.getCatapultPosition = catapult.getPosition;
   return catapult;
 };
 
@@ -54,7 +54,7 @@ const drawScene = (t) => {
 
 const tick = (t) => {
   requestAnimationFrame(tick);
-  camera.update(wgl);
+  updateCamera(wgl);
   update_anim(t);
   drawScene(t);
 };

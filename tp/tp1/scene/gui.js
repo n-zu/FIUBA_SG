@@ -9,6 +9,10 @@ const setLines = (v) => settings.wgl.setDrawLines(v);
 
 general.add(settings, "normals").name("Color normals").onChange(setNormals);
 general.add(settings, "lines").name("Draw lines").onChange(setLines);
+general
+  .add(settings, "camera_mode", ["Free", "Center", "Catapult"])
+  .name("Camera mode")
+  .listen();
 
 general.open();
 

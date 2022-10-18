@@ -306,6 +306,12 @@ const getAmmoTransform = (catapult) => () => {
   return transform;
 };
 
+const getCatapultPosition = (catapult) => () => {
+  const transform = catapult.transform;
+  const position = mx.transform(mx.vec(), transform);
+  return position;
+};
+
 const Catapult = (wgl, offset, rotation, arm_rotation, ammo) => {
   initiate(wgl);
   const base = glob_geometry.base;
@@ -321,6 +327,7 @@ const Catapult = (wgl, offset, rotation, arm_rotation, ammo) => {
     [base, arm]
   );
   catapult.getAmmoTransform = getAmmoTransform(catapult);
+  catapult.getPosition = getCatapultPosition(catapult);
   return catapult;
 };
 

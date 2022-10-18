@@ -2,6 +2,14 @@ import { mx } from "../scripts/util.js";
 import { Mesh } from "../scripts/mesh.js";
 import { Sphere } from "../scripts/geometry.js";
 let animation_meshes = [];
+let animation_meshes_queue = [];
+const queueAnimation = (mesh) => {
+  animation_meshes_queue.push(mesh);
+};
+const loadAnimations = () => {
+  animation_meshes.push(...animation_meshes_queue);
+  animation_meshes_queue = [];
+};
 
 // Ammo
 
@@ -20,10 +28,12 @@ class Ammo {
   update(t) {
     const anim_t = (t - this.ti) / ammo.dur;
 
+    const v = 25;
+    const a = -25;
     // p(t) = p + v t + a t2
-    let transform = mx.translation([0, anim_t * 25, 0]);
+    let transform = mx.translation([0, anim_t * v, 0]);
     mx.apply(transform, this.transform);
-    mx.translate(transform, [0, -20 * anim_t * anim_t, 0]);
+    mx.translate(transform, [0, a * anim_t * anim_t, 0]);
     this.mesh.transform = transform;
 
     return anim_t < 1;
@@ -37,7 +47,7 @@ const shootAmmo = (t) => {
   const transform = settings.getAmmoTransform();
   if (!transform) return;
   const ammo = new Ammo(t, transform);
-  animation_meshes.push(ammo);
+  queueAnimation(ammo);
 };
 
 // Catapult
@@ -93,10 +103,17 @@ const updateCatapult = (t) => {
 
 // ----------------------------------------------------------------
 
+window.addEventListener("keydown", (e) => {
+  if (e.key == " ") shootCatapult();
+});
+
+// ----------------------------------------------------------------
+
 settings.catapult_shoot = shootCatapult;
 
 const update = (t) => {
   updateCatapult(t);
+  loadAnimations();
   animation_meshes = animation_meshes.filter((mesh) => mesh.update(t));
 };
 

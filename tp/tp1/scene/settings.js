@@ -6,6 +6,8 @@ var settings = {
   wall_height: 1.5,
   wall_angle: 15,
 
+  camera_mode: "Center",
+
   castle_width: 6,
   castle_length: 4,
   castle_floors: 3,
