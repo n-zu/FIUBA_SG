@@ -3,7 +3,7 @@ import { Mesh, Transform } from "../scripts/mesh.js";
 import { Cylinder, Sphere } from "../scripts/geometry.js";
 import { CameraControl } from "../scripts/camera.js";
 import { Terrain, Walls, Castle, Catapult } from "./components/index.js";
-import { update as update_anim } from "./animation.js";
+import { update as update_anim, animation_meshes } from "./animation.js";
 
 const wgl = await new WebGL("#main").init(
   "./shaders/vertex.glsl",
@@ -27,16 +27,26 @@ const getCastle = () =>
     settings.castle_length,
     settings.castle_floors
   );
-const getCatapult = () =>
-  Catapult(
+const getCatapult = () => {
+  const catapult = Catapult(
     wgl,
+    settings.catapult_offset,
     settings.catapult_rotation,
     settings.catapult_arm_rotation,
     settings.catapult_ammo
   );
+  settings.getAmmoTransform = catapult.getAmmoTransform;
+  return catapult;
+};
 
 const getScene = (t) =>
-  new Mesh(["root"], null, [terrain, getWalls(), getCastle(), getCatapult()]);
+  new Mesh(["root"], null, [
+    terrain,
+    getWalls(),
+    getCastle(),
+    getCatapult(),
+    ...animation_meshes,
+  ]);
 
 const drawScene = (t) => {
   getScene(t / 1000).draw(wgl);

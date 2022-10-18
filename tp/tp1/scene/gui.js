@@ -30,6 +30,7 @@ castle.add(settings, "castle_floors", 1, 10, 1).name("Floors");
 
 //Catapult
 const catapult = gui.addFolder("Catapult");
+catapult.add(settings, "catapult_offset", -200, 200, 1).name("Offset");
 catapult.add(settings, "catapult_rotation", -30, 30, 1).name("Rotation");
 catapult.add(settings, "catapult_shoot").name("Shoot");
 

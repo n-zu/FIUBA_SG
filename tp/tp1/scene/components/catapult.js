@@ -1,3 +1,4 @@
+import { mx } from "../../scripts/util.js";
 import { Mesh, Transform } from "../../scripts/mesh.js";
 import {
   Spline,
@@ -5,7 +6,6 @@ import {
   Cube,
   Cylinder,
   Sphere,
-  Revolution,
   SweepSolid,
 } from "../../scripts/geometry.js";
 
@@ -295,20 +295,33 @@ const initiate = (wgl) => {
   setupWeight(wgl);
 };
 
-const Catapult = (wgl, rotation, arm_rotation, ammo) => {
+const getAmmoTransform = (catapult) => () => {
+  const arm = catapult.children[1];
+  const ammo = arm.children[3];
+
+  if (!ammo) return undefined;
+
+  const transforms = [ammo.transform, arm.transform, catapult.transform];
+  const transform = transforms.reduce((acc, t) => mx.apply(acc, t), mx.mat());
+  return transform;
+};
+
+const Catapult = (wgl, offset, rotation, arm_rotation, ammo) => {
   initiate(wgl);
   const base = glob_geometry.base;
   const arm = getArm(arm_rotation, ammo);
 
-  return new Mesh(
+  const catapult = new Mesh(
     ["arm_rotation"],
     [
       Transform.rotate([rad(rotation), [0, 1, 0]]),
       Transform.translate([0, 0, 17]),
-      Transform.rotate([rad(-20), [0, 1, 0]]),
+      Transform.rotate([rad(offset), [0, 1, 0]]),
     ],
     [base, arm]
   );
+  catapult.getAmmoTransform = getAmmoTransform(catapult);
+  return catapult;
 };
 
 export default Catapult;

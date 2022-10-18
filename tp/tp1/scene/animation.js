@@ -1,3 +1,44 @@
+import { mx } from "../scripts/util.js";
+import { Mesh } from "../scripts/mesh.js";
+import { Sphere } from "../scripts/geometry.js";
+let animation_meshes = [];
+
+// Ammo
+
+const ammo = {
+  dur: 2000,
+  geo: new Sphere(0.2),
+};
+class Ammo {
+  constructor(ti, initialTransform) {
+    this.ti = ti;
+    this.initialTransform = initialTransform;
+
+    this.mesh = new Mesh(["Ammo", new Sphere(0.2), settings.color.stone]);
+    this.transform = initialTransform;
+  }
+  update(t) {
+    const anim_t = (t - this.ti) / ammo.dur;
+
+    let transform = mx.translation([0, anim_t * 25, 0]);
+    mx.apply(transform, this.transform);
+    mx.translate(transform, [0, -20 * anim_t * anim_t, 0]);
+    this.mesh.transform = transform;
+
+    return anim_t < 1;
+  }
+  draw(...params) {
+    this.mesh.draw(...params);
+  }
+}
+
+const shootAmmo = (t) => {
+  const transform = settings.getAmmoTransform();
+  if (!transform) return;
+  const ammo = new Ammo(t, transform);
+  animation_meshes.push(ammo);
+};
+
 // Catapult
 const catapult = {
   state: undefined,
@@ -24,6 +65,7 @@ const updateCatapult = (t) => {
       c.state = "reloading";
       c.anim_start = undefined;
       settings.catapult_ammo = false;
+      shootAmmo(t);
       return;
     }
 
@@ -54,6 +96,7 @@ settings.catapult_shoot = shootCatapult;
 
 const update = (t) => {
   updateCatapult(t);
+  animation_meshes = animation_meshes.filter((mesh) => mesh.update(t));
 };
 
-export { update };
+export { update, animation_meshes };

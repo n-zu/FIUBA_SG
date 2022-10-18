@@ -10,6 +10,7 @@ var settings = {
   castle_length: 4,
   castle_floors: 3,
 
+  catapult_offset: -20,
   catapult_rotation: 0,
   catapult_arm_rotation: 25,
   catapult_ammo: true,

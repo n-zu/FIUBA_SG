@@ -27,6 +27,7 @@ export const mx = {
   mat: () => mat4.create(),
 
   rotation: (angle, axis) => mat4.fromRotation(mat4.create(), angle, axis),
+  translation: (v) => mat4.fromTranslation(mat4.create(), v),
 
   // Transformations
   translate: (matrix, vec) => {
