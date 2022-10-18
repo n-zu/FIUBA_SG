@@ -77,4 +77,7 @@ export const mx = {
       ...[to.p[0], to.p[1], to.p[2], 1]
     );
   },
+
+  // Other
+  lerp: (start, end, amt) => (1 - amt) * start + amt * end,
 };

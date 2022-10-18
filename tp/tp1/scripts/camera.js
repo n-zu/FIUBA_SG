@@ -4,7 +4,7 @@ const TranslationDelta = 0.1;
 const RotationDelta = 0.02;
 const InertiaFactor = 0.05;
 
-const InitialState = {
+const droneInitialState = {
   xVel: 0,
   zVel: 0,
   yVel: 0,
@@ -20,13 +20,13 @@ const InitialState = {
   xRotVel: 0,
 };
 
-class FreeCamera {
+class DroneCamera {
   constructor(initialPosition = [0, 0, 0]) {
     this.initialPosition = [...initialPosition];
     this.position = initialPosition;
     this.rotation = [0, 0, 0];
     this.worldMatrix = mat4.create();
-    this.state = { ...InitialState };
+    this.state = { ...droneInitialState };
 
     this.keyDownListener = document.addEventListener("keydown", (e) => {
       switch (e.key) {
@@ -61,12 +61,12 @@ class FreeCamera {
         case "r":
           this.rotation = vec3.create();
           this.position = { ...this.initialPosition };
-          this.state = { ...InitialState };
+          this.state = { ...droneInitialState };
           break;
 
         case "t":
           this.rotation = vec3.create();
-          this.state = { ...InitialState };
+          this.state = { ...droneInitialState };
           break;
       }
     });
@@ -154,6 +154,129 @@ class FreeCamera {
   cleanup() {
     document.removeEventListener("keydown", this.keyDownListener);
     document.removeEventListener("keyup", this.keyUpListener);
+  }
+}
+
+class FreeCamera {
+  constructor(wgl, initialPosition = [], initialDirection = [0, 0, -1]) {
+    this.position = [...initialPosition];
+    this.initialPosition = [...initialPosition];
+    this.direction = [...initialDirection];
+    this.initialDirection = [...initialDirection];
+    this.up = [0, 1, 0];
+    this.side = [1, 0, 0];
+
+    this.state = {
+      forward: 0,
+      right: 0,
+      u: 0,
+      v: 0,
+      du: 0,
+      dv: 0,
+    };
+
+    this.setupListeners();
+
+    wgl.canvas.requestPointerLock();
+  }
+  setupListeners() {
+    this.keyDownListener = document.addEventListener("keydown", (e) => {
+      const vel = 1;
+      switch (e.key) {
+        case "ArrowUp":
+        case "w":
+          this.state.forward = vel;
+          break;
+        case "ArrowDown":
+        case "s":
+          this.state.forward = -vel;
+          break;
+        case "ArrowLeft":
+        case "a":
+          this.state.right = -vel;
+          break;
+        case "ArrowRight":
+        case "d":
+          this.state.right = vel;
+      }
+    });
+
+    this.keyUpListener = document.addEventListener("keyup", (e) => {
+      switch (e.key) {
+        case "ArrowUp":
+        case "w":
+        case "ArrowDown":
+        case "s":
+          this.state.forward = 0;
+          break;
+        case "ArrowLeft":
+        case "a":
+        case "ArrowRight":
+        case "d":
+          this.state.right = 0;
+      }
+    });
+
+    this.mouseMoveListener = document.addEventListener("mousemove", (e) => {
+      const { movementX, movementY } = e;
+      const lerp_amt = 0.1;
+      this.state.du = mx.lerp(this.state.du, movementX, lerp_amt);
+      this.state.dv = mx.lerp(this.state.dv, movementY, lerp_amt);
+    });
+  }
+
+  updateDirection() {
+    const velFactor = 0.01;
+    const { du, dv } = this.state;
+    this.state.u += du * velFactor;
+    this.state.v += dv * velFactor;
+
+    if (this.state.v > 1) this.state.v = 1;
+    if (this.state.v < -0.5) this.state.v = -0.5;
+
+    const transform = mx.mat();
+    mx.rotate(transform, -this.state.v, this.side);
+    mx.rotate(transform, -this.state.u, this.up);
+
+    const dir = [...this.initialDirection];
+    mx.transform(dir, transform);
+
+    const frictionFactor = 0.9;
+    this.state.du *= frictionFactor;
+    this.state.dv *= frictionFactor;
+
+    this.direction = dir;
+  }
+  updatePosition() {
+    const { forward, right } = this.state;
+    const velFactor = 0.1;
+
+    const forwardVec = mx.norm(this.direction);
+    const rightVec = mx.norm(mx.cross(this.direction, this.up));
+
+    mx.scaleVec(forwardVec, forward * velFactor);
+    mx.scaleVec(rightVec, right * velFactor);
+
+    vec3.add(this.position, this.position, forwardVec);
+    vec3.add(this.position, this.position, rightVec);
+  }
+
+  update(wgl) {
+    this.updateDirection();
+    this.updatePosition();
+    wgl?.setViewMatrix(this.getViewMatrix());
+  }
+
+  getViewMatrix() {
+    const target = mx.add(this.position, this.direction);
+    return mat4.lookAt(mat4.create(), this.position, target, this.up);
+  }
+
+  cleanup() {
+    document.removeEventListener("keydown", this.keyDownListener);
+    document.removeEventListener("keyup", this.keyUpListener);
+    document.removeEventListener("mousemove", this.mouseMoveListener);
+    document.exitPointerLock();
   }
 }
 

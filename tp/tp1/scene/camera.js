@@ -10,7 +10,7 @@ const setCameraMode = (mode) => {
   settings.camera.cleanup();
   switch (mode) {
     case "Free":
-      settings.camera = new FreeCamera([-4, 1, 22]);
+      settings.camera = new FreeCamera(settings.wgl, [-4, 1, 22]);
       break;
     case "Center":
       settings.camera = new OrbitalCamera();
