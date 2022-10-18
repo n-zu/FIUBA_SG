@@ -6,7 +6,7 @@ let animation_meshes = [];
 // Ammo
 
 const ammo = {
-  dur: 2000,
+  dur: 1500,
   geo: new Sphere(0.2),
 };
 class Ammo {
@@ -20,6 +20,7 @@ class Ammo {
   update(t) {
     const anim_t = (t - this.ti) / ammo.dur;
 
+    // p(t) = p + v t + a t2
     let transform = mx.translation([0, anim_t * 25, 0]);
     mx.apply(transform, this.transform);
     mx.translate(transform, [0, -20 * anim_t * anim_t, 0]);
