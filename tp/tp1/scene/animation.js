@@ -21,6 +21,7 @@ class Ammo {
   constructor(ti, initialTransform) {
     this.ti = ti;
     this.initialTransform = initialTransform;
+    this.str = settings.catapult_str;
 
     this.mesh = new Mesh(["Ammo", new Sphere(0.2), settings.color.stone]);
     this.transform = initialTransform;
@@ -28,7 +29,7 @@ class Ammo {
   update(t) {
     const anim_t = (t - this.ti) / ammo.dur;
 
-    const v = 25;
+    const v = 20 + 3 * this.str;
     const a = -25;
     // p(t) = p + v t + a t2
     let transform = mx.translation([0, anim_t * v, 0]);
@@ -54,8 +55,6 @@ const shootAmmo = (t) => {
 const catapult = {
   state: undefined,
   anim_start: undefined,
-  shoot_dur: 200,
-  rload_dur: 300,
   i_rot: 25,
   f_rot: -45,
 };
@@ -70,7 +69,7 @@ const updateCatapult = (t) => {
     if (c.anim_start === undefined) c.anim_start = t;
 
     const anim_t = t - c.anim_start;
-    const dur = c.shoot_dur;
+    const dur = 200 / settings.catapult_str + 50;
 
     if (anim_t > dur) {
       c.state = "reloading";
@@ -87,7 +86,7 @@ const updateCatapult = (t) => {
     if (c.anim_start === undefined) c.anim_start = t;
 
     const anim_t = t - c.anim_start;
-    const dur = c.rload_dur;
+    const dur = 100 + 100 * settings.catapult_str;
 
     if (anim_t > dur) {
       c.state = "idle";
@@ -101,7 +100,7 @@ const updateCatapult = (t) => {
   }
 };
 
-// ----------------------------------------------------------------
+// ----------------------- KEY LISTENERS --------------------------
 
 window.addEventListener("keydown", (e) => {
   if (e.key == " ") shootCatapult();

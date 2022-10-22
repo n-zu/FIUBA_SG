@@ -14,16 +14,12 @@ general
   .name("Camera mode")
   .listen();
 
-general.open();
-
 // Wall
 const wall = gui.addFolder("Wall");
 
 wall.add(settings, "wall_number", 4, 12, 1).name("Number of walls");
 wall.add(settings, "wall_height", 1, 5, 0.5).name("Height of walls");
 wall.add(settings, "wall_angle", 0, 90, 1).name("Angle of the gate");
-
-wall.open();
 
 // Castle
 const castle = gui.addFolder("Castle");
@@ -36,13 +32,5 @@ castle.add(settings, "castle_floors", 1, 10, 1).name("Floors");
 const catapult = gui.addFolder("Catapult");
 catapult.add(settings, "catapult_offset", -200, 200, 1).name("Offset");
 catapult.add(settings, "catapult_rotation", -30, 30, 1).name("Rotation");
+catapult.add(settings, "catapult_str", 1, 5, 1).name("Strength");
 catapult.add(settings, "catapult_shoot").name("Shoot");
-
-/*
-catapult
-  .add(settings, "catapult_arm_rotation", -40, 25, 1)
-  .name("Arm rotation");
-catapult.add(settings, "catapult_ammo").name("Ammo");
-*/
-
-catapult.open();

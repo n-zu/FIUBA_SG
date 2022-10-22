@@ -277,6 +277,10 @@ const initiate = (wgl) => {
       Transform.translate([0, 0.225, 0]),
     ]
   );
+  const shadow = new Mesh(
+    ["shadow", cube, color.dark_grass],
+    [Transform.scale([base_width * 1.2, 0.001, base_length * 1.05])]
+  );
 
   const wheels = getWheels(wgl);
   const shafts = getShafts(wgl);
@@ -285,6 +289,7 @@ const initiate = (wgl) => {
 
   glob_geometry.base = new Mesh(["base"], null, [
     floor,
+    shadow,
     ...wheels,
     ...shafts,
     ...sides,

@@ -18,7 +18,7 @@ const setCameraMode = (mode) => {
     case "Catapult":
       settings.camera = new OrbitalCamera(
         settings.getCatapultPosition(),
-        [0, 0, 5]
+        [0, 1, 5]
       );
       break;
   }
