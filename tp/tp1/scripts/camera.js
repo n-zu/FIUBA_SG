@@ -374,6 +374,7 @@ class OrbitalCamera {
 
     const position = [0, this.state.y, this.state.z];
     mx.transform(position, transform);
+    if (position[1] < 0.1) position[1] = 0.1;
 
     this.position = mx.add(position, this.lookAt);
   }

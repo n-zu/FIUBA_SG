@@ -11,6 +11,9 @@ const loadAnimations = () => {
   animation_meshes_queue = [];
 };
 
+const audio = {
+  shoot: () => new Audio("assets/shoot.mp3").play(),
+};
 // Ammo
 
 const ammo = {
@@ -48,6 +51,7 @@ const shootAmmo = (t) => {
   const transform = settings.getAmmoTransform();
   if (!transform) return;
   const ammo = new Ammo(t, transform);
+  audio.shoot();
   queueAnimation(ammo);
 };
 

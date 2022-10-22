@@ -14,9 +14,28 @@ body {
   background-color: #ddd;
 }
 
+@keyframes cloud_x {
+  0% {
+    background-position-x: 0;
+  }
+  100% {
+    background-position-x: 612px;
+  }
+}
+@keyframes cloud_y {
+  0% {
+    background-position-y: 0;
+  }
+  100% {
+    background-position-y: -612px;
+  }
+}
 canvas {
   background-color: #eee;
   box-shadow: 0px 0px 3px 0px #0008;
+
+  background-image: url("https://media.istockphoto.com/photos/fluffy-clouds-hd-seamless-tiles-pattern-01-picture-id938695332?k=20&m=938695332&s=612x612&w=0&h=vvLS37XCtDZmvgG_nCVthhrKV6uWxhoBjoPyERsWgrE=");
+  animation: cloud_x 10s linear infinite, cloud_y 20s linear infinite;
   /* width: 70%;
   margin: 0 15%;*/
 }

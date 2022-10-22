@@ -46,6 +46,7 @@ const getFloorSurface = () => {
     [x1, 0, 0],
     [x2, 0, 0],
     [x2, depth, 0],
+    [0, depth - 0.1, 0],
   ];
 
   const shape = Spline.rect(points, {
