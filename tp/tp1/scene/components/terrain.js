@@ -3,22 +3,49 @@ import {
   Spline,
   Surface,
   Cube,
-  Cylinder,
   Revolution,
   SweepSolid,
 } from "../../scripts/geometry.js";
 
 const color = settings.color;
+const depth = -4;
 
-const getSurface = () => {
+const getCenterSurface = () => {
+  const x1 = 8;
+  const x2 = 12;
+  const points = [
+    [0, 0, 0],
+    [x1, 0, 0],
+    [x2, depth, 0],
+    [0, depth, 0],
+  ];
+
+  const shape = Spline.rect(points, {
+    bi_normal: [0, 0, 1],
+  });
+  const surface = new Surface(shape);
+
+  return surface;
+};
+const getCenterGeometry = (wgl) => {
+  const rev = new Revolution();
+  const surface = getCenterSurface();
+  return new SweepSolid(surface, rev).setupBuffers(
+    wgl,
+    40,
+    3 * surface.shape.segNum,
+    false
+  );
+};
+const getFloorSurface = () => {
   const x1 = 15;
   const x2 = 30;
   const points = [
-    [0, -4, 0],
-    [x1 * 0.9, -4, 0],
+    [0, depth, 0],
+    [x1 * 0.9, depth, 0],
     [x1, 0, 0],
     [x2, 0, 0],
-    [x2, -4, 0],
+    [x2, depth, 0],
   ];
 
   const shape = Spline.rect(points, {
@@ -30,7 +57,7 @@ const getSurface = () => {
 };
 const getFloorGeometry = (wgl) => {
   const rev = new Revolution();
-  const surface = getSurface();
+  const surface = getFloorSurface();
   return new SweepSolid(surface, rev).setupBuffers(
     wgl,
     8,
@@ -44,16 +71,8 @@ const Terrain = (wgl) => {
   if (cache) return cache;
 
   const cube = new Cube(1).setupBuffers(wgl);
-  const cyl = new Cylinder(10, 8).setupBuffers(wgl, 30);
 
-  const center = new Mesh(
-    ["center", cyl, color.grass],
-    [
-      Transform.rotate([-Math.PI / 2, [1, 0, 0]]),
-      Transform.translate([0, -0.5, 0]),
-      Transform.scale([1, 3, 1]),
-    ]
-  );
+  const center = new Mesh(["center", getCenterGeometry(wgl), color.grass]);
   const bridge = new Mesh(
     ["bridge", cube, color.grass],
     [
