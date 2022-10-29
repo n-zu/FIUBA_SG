@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sweeping Solid</title>
+    <link rel="icon" href="../assets/sphere.ico" />
+    <script src="../../../lib/gl-matrix-3.3.0.min.js"></script>
+    <script type="module">
+      import { WebGL } from "../scripts/webgl.js";
+      import { mx } from "../scripts/util.js";
+      import { Spline, Surface, SweepSolid } from "../scripts/geometry.js";
+      import { CameraControl } from "../scripts/camera.js";
+
+      const wgl = await new WebGL("#main").init();
+      const camera = new CameraControl([0, 0, 10]);
+
+      const getCurve = (z) => {
+        const points = [
+          [-2.0, -2.0, z],
+          [2.0, -2.0, z],
+          [2.0, -2.0, z],
+          [2.0, 0.0, z],
+
+          [2.0, 2.0, z],
+          [2.0, 2.0, z],
+          [-2.0, 2.0, z],
+
+          [-6, 2, z],
+          [-6, 2, z],
+          [-6, 0, z],
+
+          [-6, -2, z],
+          [-6, -2, z],
+          [-2, -2, z],
+        ];
+
+        return new Spline(points, {
+          normal: [0, 0, 1],
+        });
+      };
+
+      const getCurve2 = () => {
+        const points = [
+          [0, 0, 0],
+          [0, 0, 5],
+          [-2, 0, 5],
+          [-2, 0, 0],
+
+          [-2, 0, -5],
+          [3, -3, -5],
+          [3, -3, 0],
+
+          [3, -3, 5],
+          [0, 4, 5],
+          [0, 4, 0],
+        ];
+
+        return new Spline(points, {});
+      };
+
+      const getSurface = (z, circle = false) => {
+        const f = 1.5,
+          r = 1;
+        const circle_points = [
+          [0, r, z],
+          [f * r, r, z],
+          [f * r, -r, z],
+          [0, -r, z],
+          [-f * r, -r, z],
+          [-f * r, r, z],
+          [0, r, z],
+        ];
+
+        const semi_points = [
+          [0.0, 1.0, z],
+          [1.0, 1.0, z],
+          [1.0, -1.0, z],
+          [0.0, -1.0, z],
+
+          [0.0, 0.0, z],
+          [0.0, 0.0, z],
+          [0.0, 1.0, z],
+        ];
+
+        const config = {
+          bi_normal: [0, 0, 1],
+        };
+
+        const orientation = {
+          p: mx.vec(0, 0, z),
+          n: mx.vec(0, 1, 0),
+          t: mx.vec(0, 0, -1),
+        };
+
+        const points = circle ? circle_points : semi_points;
+
+        const shape = new Spline(points, config);
+        const surface = new Surface(shape, orientation);
+
+        return surface;
+      };
+
+      const drawSurfaceAt = (surface, orientation, delta = 0.01) => {
+        surface.alignTo(orientation);
+        surface.webglDraw(wgl, delta, {});
+      };
+
+      const drawSurfaceAtCurve = (surface, curve, u, delta = 0.01) =>
+        drawSurfaceAt(surface, curve.point(u), delta);
+
+      const z = 0;
+      const curve = getCurve(z);
+      const low_curve = getCurve(z - 1);
+      const high_curve = getCurve(z + 1);
+
+      const surface = getSurface(z);
+
+      const solid = new SweepSolid(surface, curve);
+      solid.setupBuffers(wgl, 200, 50);
+
+      const curve2 = getCurve2();
+      const surface2 = getSurface(z, true);
+      const solid2 = new SweepSolid(surface2, curve2);
+      solid2.setupBuffers(wgl, 500, 20);
+
+      const scanSurface = (from, to, t, factor) => {
+        const u = from + ((to - from) * (Math.sin(t / factor) + 1)) / 2;
+        drawSurfaceAtCurve(surface, curve, u);
+      };
+
+      const drawScene = (t, curves = false, scan = false, s2 = false) => {
+        const mode = wgl.gl.LINE_STRIP && undefined;
+        solid.draw(wgl, mode);
+
+        if (curves) {
+          curve2.webglDraw(wgl, 0.01, 0.05);
+          curve.webglDraw(wgl);
+          low_curve.webglDraw(wgl);
+          high_curve.webglDraw(wgl, 0.01);
+        }
+
+        if (scan) {
+          scanSurface(0.65, 0.67, t, 1000);
+          scanSurface(0.5, 0.8, t, 1000);
+          scanSurface(0, 1, t, 1000);
+        }
+        if (s2) solid2.draw(wgl, mode);
+      };
+      drawScene(0, true);
+
+      const tick = (t) => {
+        requestAnimationFrame(tick);
+        const viewMatrix = camera.getViewMatrix();
+        wgl.setViewMatrix(viewMatrix);
+        camera.update();
+        drawScene(t, false, false, true);
+      };
+      tick();
+    </script>
+  </head>
+  <body>
+    <canvas id="main" width="1000" height="500">
+      Your browser does not support the HTML5 canvas element.
+    </canvas>
+  </body>
+</html>

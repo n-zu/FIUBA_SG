@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>TP1</title>
+    <link rel="icon" href="./assets/sphere.ico" />
+    <link rel="stylesheet" href="assets/style.css" />
+
+    <script src="../../lib/gl-matrix-3.3.0.min.js"></script>
+    <script src="../../lib/dat.gui.min.js"></script>
+
+    <script src="scene/settings.js"></script>
+    <script src="scene/gui.js" defer></script>
+    <script src="scene/main.js" type="module" defer></script>
+  </head>
+  <body>
+    <section class="controls">
+      <div class="camera">
+        <h3>Camera :</h3>
+        <div>
+          <b>1</b>
+          Free
+        </div>
+        <div>
+          <b>2</b>
+          Castle
+        </div>
+        <div>
+          <b>3</b>
+          Catapult
+        </div>
+      </div>
+    </section>
+    <canvas id="main" width="1000" height="600">
+      Your browser does not support the HTML5 canvas element.
+    </canvas>
+    <section class="controls" id="controls">
+      <div class="movement">
+        <h3>Move :</h3>
+        <div>
+          <b>W</b>
+        </div>
+        <div>
+          <b>A</b>
+        </div>
+        <div>
+          <b>S</b>
+        </div>
+        <div>
+          <b>D</b>
+        </div>
+      </div>
+      <div class="pan not_free">
+        <h3>Pan:</h3>
+        <div>
+          <b>Q</b>
+        </div>
+        <div>
+          <b>E</b>
+        </div>
+      </div>
+      <div class="look free">
+        <h3>Look:</h3>
+        <span class="icon">🖱️</span>
+      </div>
+      <div class="shoot">
+        <h3>Shoot:</h3>
+        <div>
+          <b>Space</b>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>

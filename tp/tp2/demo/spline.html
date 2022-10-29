@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Spline</title>
+    <link rel="icon" href="../assets/sphere.ico" />
+    <script src="../../../lib/gl-matrix-3.3.0.min.js"></script>
+    <script type="module">
+      "use strict";
+
+      import { SegCon, Spline } from "../scripts/geometry.js";
+
+      function dibujarVector(x1, y1, x2, y2, color) {
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 + x2, y1 + y2);
+        ctx.strokeStyle = color;
+        ctx.stroke();
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        ctx.clearRect(0, 0, 1000, 1000);
+        spline.canvasDraw(ctx, true, 0.02);
+        spline2.canvasDraw(ctx, false, 0.04);
+
+        const { p: punto, t, n } = spline.point(currentU);
+
+        // dibujar punto de la curva en verde
+        currentU += 0.002;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(punto[0], punto[1], 10, 0, 2 * Math.PI);
+        ctx.strokeStyle = "#00F";
+        ctx.stroke();
+
+        dibujarVector(punto[0], punto[1], t[0] * 50, t[1] * 50, "#F00");
+        dibujarVector(punto[0], punto[1], n[0] * 50, n[1] * 50, "#0F0");
+
+        if (currentU > 1) currentU = 0;
+      }
+
+      var puntos = [
+        // Seg 1
+        [0, 0, 0],
+        [0, 200, 0],
+        [200, 200, 0],
+        [200, 100, 0],
+        // Seg 2
+        [200, 0, 0],
+        [400, 0, 0],
+        [400, 200, 0],
+        // Seg 3
+        [400, 400, 0],
+        [300, 200, 0],
+        [200, 200, 0],
+        // Seg 4
+        [100, 200, 0],
+        [0, 200, 0],
+        [0, 400, 0],
+      ];
+      const puntos2 = puntos.map((p) => [p[0], p[1] + 300, p[2]]);
+      const convexity = [
+        SegCon.concave(),
+        SegCon.convex(),
+        SegCon.convexUpTo(0.62),
+        SegCon.concave(),
+      ];
+      const bi_normal = [0, 0, -1];
+
+      var spline = new Spline(puntos, { convexity });
+      var spline2 = new Spline(puntos2, { bi_normal });
+
+      var currentU = 0;
+
+      var c = document.getElementById("myCanvas");
+      var ctx = c.getContext("2d");
+
+      animate();
+    </script>
+  </head>
+  <body>
+    <canvas
+      id="myCanvas"
+      width="1000"
+      height="1000"
+      style="border: 3px solid #d3d3d3"
+    >
+      Your browser does not support the HTML5 canvas tag.
+    </canvas>
+  </body>
+</html>
