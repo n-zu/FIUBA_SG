@@ -7,7 +7,8 @@ import { update as update_anim, animation_meshes } from "./animation.js";
 
 const wgl = await new WebGL("#main").init(
   "./shaders/vertex.glsl",
-  "./shaders/fragment.glsl"
+  "./shaders/fragment.glsl",
+  settings.textures
 );
 wgl
   .setUseTexture(!settings.normals)

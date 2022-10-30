@@ -62,8 +62,10 @@ export const setup2DBuffers = (
   shape,
   divisions,
   reverse = false,
-  uvScale
-) => shape.alignTo(point).getBuffers(wgl, 1 / divisions, reverse, uvScale);
+  uvScale,
+  axis
+) =>
+  shape.alignTo(point).getBuffers(wgl, 1 / divisions, reverse, uvScale, axis);
 
 class SegCon {
   static default = () => (u) => default_convexity;
@@ -431,7 +433,7 @@ class Surface {
     }
   }
 
-  getBuffers(wgl, delta = 0.01, reverse = false, uvScale = [1, 1]) {
+  getBuffers(wgl, delta = 0.01, reverse = false, uvScale = [1, 1], axis = 1) {
     const { p: center, t: _t } = this.getOrientation();
     const t = reverse ? mx.neg(_t) : _t;
 
@@ -445,9 +447,9 @@ class Surface {
       const { p } = this.shape.point(u);
       points.push(...p);
       normals.push(...t);
-      // Surface must be defined in x,y
+      // Surface must be defined in 1: x,y, 2:x,z
       _u.push(p[0]);
-      _v.push(p[1]);
+      _v.push(p[axis]);
     }
 
     const n_points = points.length / 3;
@@ -531,17 +533,17 @@ class SweepSolid {
     cols = 50,
     useCovers = true,
     uvScale,
-    coversUvScale
+    coversUvScale,
+    coversAxis
   ) {
     setup3DBuffers(this, wgl, rows, cols, uvScale);
 
     this.buffers.covers = undefined;
     if (useCovers) {
-      const uvs = coversUvScale;
       const start = this.path.point(0);
       const end = this.path.point(1);
-      const startBuff = setup2DBuffers(wgl, start, this.shape, cols, 0, uvs);
-      const endBuffers = setup2DBuffers(wgl, end, this.shape, cols, 1, uvs);
+      const startBuff = setup2DBuffers(wgl, start, this.shape, cols, 0, coversUvScale,coversAxis);
+      const endBuffers = setup2DBuffers(wgl, end, this.shape, cols, 1, coversUvScale,coversAxis);
       this.buffers.covers = [startBuff, endBuffers];
     }
 
@@ -595,7 +597,7 @@ class Cube {
   }
 
   setupBuffers(wgl, uvScale, coversUvScale) {
-    this.solid.setupBuffers(wgl, 2, 4 * 3, true, uvScale, coversUvScale);
+    this.solid.setupBuffers(wgl, 2, 4 * 3, true, uvScale, coversUvScale,2);
     return this;
   }
 

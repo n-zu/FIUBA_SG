@@ -20,9 +20,9 @@ var settings = {
   catapult_shoot: () => {},
 
   color: {
-    wall: [0.5, 0.5, 0.5],
+    wall: "stone_wall",
     stone: [0.5, 0.5, 0.5],
-    wood: [0.7, 0.5, 0.1],
+    wood: "wood",
     dark_wood: [0.4, 0.3, 0.1],
     grass: [0.5, 0.8, 0.5],
     dark_grass: [0.5 * 0.88, 0.8 * 0.88, 0.5 * 0.88],
@@ -31,4 +31,19 @@ var settings = {
     window: [0.2, 0.2, 0.2],
     tower_tip: [0.2, 0.2, 0.5],
   },
+
+  textures: [
+    {
+      name: "default",
+      src: "assets/textures/proto.png",
+    },
+    {
+      name: "stone_wall",
+      src: "assets/textures/stone_wall/diffuse.jpg",
+    },
+    {
+      name: "wood",
+      src: "assets/textures/wood/diffuse.jpg",
+    },
+  ],
 };

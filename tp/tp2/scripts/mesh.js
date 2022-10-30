@@ -10,7 +10,8 @@ class Mesh {
   constructor(attributes, transformations, children) {
     if (attributes?.[0]) this.name = attributes?.[0];
     if (attributes?.[1]) this.geometry = attributes?.[1];
-    if (attributes?.[2]) this.color = attributes?.[2];
+    if (attributes?.[2] && !Array.isArray(attributes?.[2]))
+      this.texture = attributes?.[2];
 
     transformations?.[0] &&
       transformations.reverse().forEach(({ pos, rot, scale }) => {
@@ -27,7 +28,7 @@ class Mesh {
 
     if (this.geometry) {
       wgl.setModelMatrix(transform);
-      wgl.setColor(this.color);
+      wgl._setTexture(this.texture);
       this.geometry.draw(wgl);
     }
 

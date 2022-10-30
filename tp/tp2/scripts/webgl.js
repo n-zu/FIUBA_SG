@@ -146,36 +146,51 @@ export class WebGL {
     this.gl.uniform3fv(colorUniform, modelColor);
   }
 
-  _setTexture(gl, name = "default") {
+  _setTexture(name = "default") {
+    const gl = this.gl;
     /* FIXME
     const textureUniform = this.gl.getUniformLocation(this.glProgram, "texture");
     this.gl.uniform1i(textureUniform, this.textures[name]);
     */
+
+    if (this._current_texture == name) return;
+
     const texture =
       this.textures.find((t) => t.name === name) || this.textures[0];
-    const img = texture.image;
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-    gl.generateMipmap(gl.TEXTURE_2D);
+    const tex = texture.texture;
 
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.bi;
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    this._current_texture = name;
   }
 
   async initTextures(gl, textures = defaultTextures) {
     this.textures = await Promise.all(
       textures.map(async (texture) => {
         const image = await loadImage(texture.src);
+        const tex = gl.createTexture();
         return {
           ...texture,
           image,
+          texture: tex,
         };
       })
     );
 
-    const texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+    this.textures.forEach((texture) => {
+      gl.bindTexture(gl.TEXTURE_2D, texture.texture);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        texture.image
+      );
+      gl.generateMipmap(gl.TEXTURE_2D);
+    });
 
-    this._setTexture(gl);
+    this._setTexture();
   }
 
   setUseTexture(bool) {

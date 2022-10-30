@@ -10,6 +10,7 @@ import { mx } from "../../scripts/util.js";
 
 const color = settings.color;
 var glob_geometry = {};
+const texScale = 0.5;
 
 const _radius = 7;
 const battlements_height = 0.2;
@@ -91,7 +92,7 @@ const getTowerGeometry = (wgl, height) => {
     20,
     parseInt(20 * height),
     false,
-    [6, 8]
+    [6 * texScale, parseInt(3 * height) * texScale]
   );
   return geometry;
 };
@@ -181,15 +182,58 @@ const getWallGeometry = (wgl, points, height) => {
     3 * path.segNum,
     parseInt(30 * height),
     true,
-    [100, 10]
+    [100 * texScale, parseInt(4 * height) * texScale]
   );
 
   return geometry;
 };
-const getWall = (wgl, points, height) => {
-  const geometry = glob_geometry.walls;
+const getWallMesh = (wgl, points, height) => {
+  const pi = [1, 0, points[0][2]];
+  const pf = [-1, 0, points[0][2]];
+  const initialPath = Spline.rect([pi, points[0]], {
+    normal: [0, 1, 0],
+  });
+  const finalPath = Spline.rect([points[points.length - 1], pf], {
+    normal: [0, 1, 0],
+  });
+  const path = Spline.rect(points, {
+    normal: [0, 1, 0],
+  });
 
-  return new Mesh(["Wall", geometry, color.wall]);
+  const surface = glob_geometry.wallSurface;
+
+  const initialGeometry = new SweepSolid(surface, initialPath).setupBuffers(
+    wgl,
+    3 * path.segNum,
+    parseInt(30 * height),
+    true,
+    [50 * texScale, parseInt(4 * height) * texScale]
+  );
+
+  const geometry = new SweepSolid(surface, path).setupBuffers(
+    wgl,
+    3 * path.segNum,
+    parseInt(30 * height),
+    true,
+    [150 * texScale, parseInt(4 * height) * texScale]
+  );
+
+  const finalGeometry = new SweepSolid(surface, finalPath).setupBuffers(
+    wgl,
+    3 * path.segNum,
+    parseInt(30 * height),
+    true,
+    [50 * texScale, parseInt(4 * height) * texScale]
+  );
+
+  return new Mesh(["Wall"], null, [
+    new Mesh(["Wall", initialGeometry, color.wall]),
+    new Mesh(["Wall", geometry, color.wall]),
+    new Mesh(["Wall", finalGeometry, color.wall]),
+  ]);
+};
+const getWall = (wgl, points, height) => {
+  return glob_geometry.wallsMesh;
 };
 const getGate = (wgl, points, height, angle = 15) => {
   const gate_frame_geometry = glob_geometry.gate_frame;
@@ -208,19 +252,27 @@ const getGate = (wgl, points, height, angle = 15) => {
       ]
     ),
     new Mesh(
-      ["left side", gate_frame_geometry, color.wall],
+      ["left", gate_frame_geometry, color.wall],
       [
-        Transform.translate([0, 0.5, 0]),
-        Transform.scale([thickness, height - thickness, depth]),
-        Transform.translate([-1 + thickness / 2, 0, point]),
+        Transform.scale([height - thickness, thickness, depth]),
+        Transform.rotate([Math.PI / 2, [0, 0, 1]]),
+        Transform.translate([
+          -1 + thickness / 2,
+          height / 2 - thickness / 2,
+          point,
+        ]),
       ]
     ),
     new Mesh(
-      ["right side", gate_frame_geometry, color.wall],
+      ["right", gate_frame_geometry, color.wall],
       [
-        Transform.translate([0, 0.5, 0]),
-        Transform.scale([thickness, height - thickness, depth]),
-        Transform.translate([1 - thickness / 2, 0, point]),
+        Transform.scale([height - thickness, thickness, depth]),
+        Transform.rotate([Math.PI / 2, [0, 0, 1]]),
+        Transform.translate([
+          1 - thickness / 2,
+          height / 2 - thickness / 2,
+          point,
+        ]),
       ]
     ),
   ]);
@@ -273,10 +325,18 @@ const initiate = (wgl, number, height, angle) => {
     glob_geometry.wallSurface = getWallSurface(height);
   }
   glob_geometry.walls = getWallGeometry(wgl, glob_geometry.points, height);
+  glob_geometry.wallsMesh = getWallMesh(wgl, glob_geometry.points, height);
 
   glob_geometry.cube = new Cube().setupBuffers(wgl);
-  glob_geometry.gate_frame = new Cube().setupBuffers(wgl, [0.5, 0.5], [2, 2]);
-  glob_geometry.gate_door = new Cube().setupBuffers(wgl, [5, 30]);
+  glob_geometry.gate_frame = new Cube().setupBuffers(
+    wgl,
+    [1 * texScale, 30 * texScale],
+    [2 * texScale, 1 * texScale]
+  );
+  glob_geometry.gate_door = new Cube().setupBuffers(wgl, [
+    5 * texScale * height,
+    70 * texScale,
+  ]);
   glob_geometry.initiated = true;
 
   return true;
