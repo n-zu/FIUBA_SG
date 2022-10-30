@@ -1,10 +1,13 @@
 precision highp float;
 
-uniform vec3 modelColor;
 uniform bool useTexture;
+uniform vec3 modelColor;
+uniform sampler2D texture;
 
 varying vec3 vNormal;
 varying vec3 vPosWorld;
+varying vec2 vUV;
+ 
 
 void main(void) {
 
@@ -18,7 +21,8 @@ void main(void) {
   float lightFactor = 0.6 + 0.15*vNormal.y + 0.05 * vNormal.z + 0.05 * vNormal.x; 
 
   if ( useTexture ) {
-    gl_FragColor = vec4(modelColor*lightFactor, 1.0);
+    gl_FragColor = texture2D(texture, vUV);
+    // gl_FragColor = vec4(modelColor*lightFactor, 1.0);
   } else {
     gl_FragColor = vec4(normalColor, 1.0);
   }

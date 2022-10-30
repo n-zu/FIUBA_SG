@@ -1,5 +1,12 @@
-import { mat4, mx } from "./util.js";
+import { loadImage, mat4, mx } from "./util.js";
 import { default_vertex, default_fragment } from "../shaders/index.js";
+
+const defaultTextures = [
+  {
+    name: "default",
+    src: "https://raw.githubusercontent.com/gsimone/gridbox-prototype-materials/main/prototype_512x512_grey1.png",
+  },
+];
 
 export const setup = (gl, canvas) => {
   gl.enable(gl.DEPTH_TEST);
@@ -90,10 +97,11 @@ export class WebGL {
     setup(this.gl, this.canvas);
   }
 
-  async init(vertex_file, shader_file) {
+  async init(vertex_file, shader_file, textures) {
     this.glProgram = await initShaders(this.gl, vertex_file, shader_file);
     setupMatrices(this.gl, this.canvas, this.glProgram);
     this.clear();
+    await this.initTextures(this.gl, textures);
     return this;
   }
 
@@ -136,6 +144,38 @@ export class WebGL {
       "modelColor"
     );
     this.gl.uniform3fv(colorUniform, modelColor);
+  }
+
+  _setTexture(gl, name = "default") {
+    /* FIXME
+    const textureUniform = this.gl.getUniformLocation(this.glProgram, "texture");
+    this.gl.uniform1i(textureUniform, this.textures[name]);
+    */
+    const texture =
+      this.textures.find((t) => t.name === name) || this.textures[0];
+    const img = texture.image;
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.generateMipmap(gl.TEXTURE_2D);
+
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.generateMipmap(gl.TEXTURE_2D);
+  }
+
+  async initTextures(gl, textures = defaultTextures) {
+    this.textures = await Promise.all(
+      textures.map(async (texture) => {
+        const image = await loadImage(texture.src);
+        return {
+          ...texture,
+          image,
+        };
+      })
+    );
+
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    this._setTexture(gl);
   }
 
   setUseTexture(bool) {
@@ -184,6 +224,29 @@ export class WebGL {
     this.setWglAtt("aVertexNormal", normalsBuffer, 3);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indicesBuffer);
+
+    if (this.drawSurfaces) gl.drawElements(mode, nvp, gl.UNSIGNED_SHORT, 0);
+
+    if (this.drawLines) {
+      this._setColor([0.4, 0.4, 0.4]);
+      gl.drawElements(this.gl.LINE_STRIP, nvp, gl.UNSIGNED_SHORT, 0);
+      this._setColor(this.color);
+    }
+  };
+
+  drawFromBuffersObject = (buffers, mode) => {
+    const { pointsBuffer, normalsBuffer, idxBuffer, uvBuffer } = buffers;
+
+    if (!uvBuffer) console.log("no uv buffer");
+
+    const gl = this.gl;
+    const nvp = idxBuffer.number_vertex_point;
+
+    this.setWglAtt("aVertexPosition", pointsBuffer, 3);
+    this.setWglAtt("aVertexNormal", normalsBuffer, 3);
+    this.setWglAtt("aVertexUV", uvBuffer, 2);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, idxBuffer);
 
     if (this.drawSurfaces) gl.drawElements(mode, nvp, gl.UNSIGNED_SHORT, 0);
 

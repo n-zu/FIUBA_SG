@@ -78,7 +78,6 @@ const getTowerSurface = (height) => {
 
   const shape = new Spline(points, {
     bi_normal: [0, 0, 1],
-    uniformLength: true,
   });
   const surface = new Surface(shape);
 
@@ -91,7 +90,8 @@ const getTowerGeometry = (wgl, height) => {
     wgl,
     20,
     parseInt(20 * height),
-    false
+    false,
+    [6, 8]
   );
   return geometry;
 };
@@ -161,7 +161,6 @@ const getWallSurface = (height) => {
 
   const shape = new Spline(points, {
     bi_normal: [0, 0, 1],
-    uniformLength: true,
   });
   const surface = new Surface(shape);
 
@@ -180,7 +179,9 @@ const getWallGeometry = (wgl, points, height) => {
   const geometry = new SweepSolid(surface, path).setupBuffers(
     wgl,
     3 * path.segNum,
-    parseInt(30 * height)
+    parseInt(30 * height),
+    true,
+    [100, 10]
   );
 
   return geometry;
@@ -191,7 +192,8 @@ const getWall = (wgl, points, height) => {
   return new Mesh(["Wall", geometry, color.wall]);
 };
 const getGate = (wgl, points, height, angle = 15) => {
-  const geometry = new Cube(1).setupBuffers(wgl);
+  const gate_frame_geometry = glob_geometry.gate_frame;
+  const gate_geometry = glob_geometry.gate_door;
   const point = points[0][2];
 
   const depth = 1;
@@ -199,14 +201,14 @@ const getGate = (wgl, points, height, angle = 15) => {
   const thickness = 0.1;
   const frame = new Mesh(["GateFrame"], null, [
     new Mesh(
-      ["top", geometry, color.wall],
+      ["top", gate_frame_geometry, color.wall],
       [
         Transform.scale([2, thickness, depth]),
         Transform.translate([0, height - thickness / 2, point]),
       ]
     ),
     new Mesh(
-      ["left side", geometry, color.wall],
+      ["left side", gate_frame_geometry, color.wall],
       [
         Transform.translate([0, 0.5, 0]),
         Transform.scale([thickness, height - thickness, depth]),
@@ -214,7 +216,7 @@ const getGate = (wgl, points, height, angle = 15) => {
       ]
     ),
     new Mesh(
-      ["right side", geometry, color.wall],
+      ["right side", gate_frame_geometry, color.wall],
       [
         Transform.translate([0, 0.5, 0]),
         Transform.scale([thickness, height - thickness, depth]),
@@ -226,7 +228,7 @@ const getGate = (wgl, points, height, angle = 15) => {
   const door_thickness = 0.06;
   const door_rotation = (2 * Math.PI * angle) / 360;
   const door = new Mesh(
-    ["Draw Bridge", geometry, color.wood],
+    ["Draw Bridge", gate_geometry, color.wood],
     [
       Transform.translate([0, 0.5, 0]),
       Transform.scale([2 - 2 * thickness, height - 0.1, door_thickness]),
@@ -273,6 +275,8 @@ const initiate = (wgl, number, height, angle) => {
   glob_geometry.walls = getWallGeometry(wgl, glob_geometry.points, height);
 
   glob_geometry.cube = new Cube().setupBuffers(wgl);
+  glob_geometry.gate_frame = new Cube().setupBuffers(wgl, [0.5, 0.5], [2, 2]);
+  glob_geometry.gate_door = new Cube().setupBuffers(wgl, [5, 30]);
   glob_geometry.initiated = true;
 
   return true;

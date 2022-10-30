@@ -22,18 +22,20 @@ const repeat = (elem, n) => Array(n).fill(elem);
 
 // Object
 
-export const setup3DBuffers = (obj, wgl, rows, cols) => {
+export const setup3DBuffers = (obj, wgl, rows, cols, uvScale = [1, 1]) => {
   const points = [];
   const normals = [];
+  const uv = [];
 
-  for (let r = 0; r <= rows; r++) {
-    for (let c = 0; c <= cols; c++) {
-      const u = r / rows;
-      const v = c / cols;
-      const { p, n } = obj.point(u, v);
+  for (let row = 0; row <= rows; row++) {
+    for (let col = 0; col <= cols; col++) {
+      const r = row / rows;
+      const c = col / cols;
+      const { p, n, u, v } = obj.point(r, c);
 
       points.push(...p);
       normals.push(...n);
+      uv.push(u * uvScale[0], v * uvScale[1]);
     }
   }
 
@@ -47,14 +49,21 @@ export const setup3DBuffers = (obj, wgl, rows, cols) => {
   const pointsBuffer = wgl.createBuffer(points);
   const normalsBuffer = wgl.createBuffer(normals);
   const idxBuffer = wgl.createIndexBuffer(idx);
+  const uvBuffer = wgl.createBuffer(uv);
 
-  obj.buffers = { pointsBuffer, normalsBuffer, idxBuffer };
+  obj.buffers = { pointsBuffer, normalsBuffer, idxBuffer, uvBuffer };
   obj.rows = rows;
   obj.cols = cols;
 };
 
-export const setup2DBuffers = (wgl, point, shape, divisions, reverse = false) =>
-  shape.alignTo(point).getBuffers(wgl, 1 / divisions, reverse);
+export const setup2DBuffers = (
+  wgl,
+  point,
+  shape,
+  divisions,
+  reverse = false,
+  uvScale
+) => shape.alignTo(point).getBuffers(wgl, 1 / divisions, reverse, uvScale);
 
 class SegCon {
   static default = () => (u) => default_convexity;
@@ -422,26 +431,42 @@ class Surface {
     }
   }
 
-  getBuffers(wgl, delta = 0.01, reverse = false) {
+  getBuffers(wgl, delta = 0.01, reverse = false, uvScale = [1, 1]) {
     const { p: center, t: _t } = this.getOrientation();
     const t = reverse ? mx.neg(_t) : _t;
 
     let points = [...center];
     let normals = [...t];
+    let uv = [0, 0],
+      _u = [],
+      _v = [];
 
     for (let u = 0; u <= 1.001; u = u + delta) {
       const { p } = this.shape.point(u);
       points.push(...p);
       normals.push(...t);
+      // Surface must be defined in x,y
+      _u.push(p[0]);
+      _v.push(p[1]);
     }
 
     const n_points = points.length / 3;
     const idx = arrayOf(n_points);
 
+    //FIXME: negative values
+    const max_u = Math.max(..._u);
+    const max_v = Math.max(..._v);
+    for (let i = 0; i < n_points; i++) {
+      const u = _u[i] / max_u;
+      const v = _v[i] / max_v;
+      uv.push(u * uvScale[0], v * uvScale[1]);
+    }
+
     return {
-      points: wgl.createBuffer(points),
-      normals: wgl.createBuffer(normals),
-      idx: wgl.createIndexBuffer(idx),
+      pointsBuffer: wgl.createBuffer(points),
+      normalsBuffer: wgl.createBuffer(normals),
+      idxBuffer: wgl.createIndexBuffer(idx),
+      uvBuffer: wgl.createBuffer(uv),
     };
   }
 }
@@ -464,6 +489,8 @@ class SweepSolid {
     const curvePoint = this.path.point(u);
     this.shape.alignTo(curvePoint);
     const shapePoint = this.shape.shapePoint(v);
+    shapePoint.u = u;
+    shapePoint.v = v;
 
     return shapePoint;
   }
@@ -498,16 +525,24 @@ class SweepSolid {
     wgl.draw(points, normals, idx, wgl.gl.TRIANGLE_STRIP);
   }
 
-  setupBuffers(wgl, rows = 50, cols = 50, useCovers = true) {
-    setup3DBuffers(this, wgl, rows, cols);
+  setupBuffers(
+    wgl,
+    rows = 50,
+    cols = 50,
+    useCovers = true,
+    uvScale,
+    coversUvScale
+  ) {
+    setup3DBuffers(this, wgl, rows, cols, uvScale);
 
     this.buffers.covers = undefined;
     if (useCovers) {
+      const uvs = coversUvScale;
       const start = this.path.point(0);
       const end = this.path.point(1);
-      const startBuffers = setup2DBuffers(wgl, start, this.shape, cols);
-      const endBuffers = setup2DBuffers(wgl, end, this.shape, cols, true);
-      this.buffers.covers = [startBuffers, endBuffers];
+      const startBuff = setup2DBuffers(wgl, start, this.shape, cols, 0, uvs);
+      const endBuffers = setup2DBuffers(wgl, end, this.shape, cols, 1, uvs);
+      this.buffers.covers = [startBuff, endBuffers];
     }
 
     return this;
@@ -515,8 +550,7 @@ class SweepSolid {
 
   draw(wgl, mode = wgl.gl.TRIANGLE_STRIP) {
     if (!this.buffers) this.setupBuffers(wgl);
-    const { pointsBuffer, normalsBuffer, idxBuffer } = this.buffers;
-    wgl.drawFromBuffers(pointsBuffer, normalsBuffer, idxBuffer, mode);
+    wgl.drawFromBuffersObject(this.buffers, mode);
 
     this.drawCovers(wgl);
   }
@@ -526,12 +560,7 @@ class SweepSolid {
     if (!coverBuffers) return;
 
     this.buffers.covers.forEach((buf) => {
-      wgl.drawFromBuffers(
-        buf.points,
-        buf.normals,
-        buf.idx,
-        wgl.gl.TRIANGLE_FAN
-      );
+      wgl.drawFromBuffersObject(buf, wgl.gl.TRIANGLE_FAN);
     });
   }
 }
@@ -565,8 +594,8 @@ class Cube {
     this.solid = new SweepSolid(surface, path);
   }
 
-  setupBuffers(wgl) {
-    this.solid.setupBuffers(wgl, 2, 4 * 3);
+  setupBuffers(wgl, uvScale, coversUvScale) {
+    this.solid.setupBuffers(wgl, 2, 4 * 3, true, uvScale, coversUvScale);
     return this;
   }
 
@@ -590,7 +619,7 @@ class Cylinder {
     let n = mx.norm([1, 0, this.r[0] - this.r[1]]);
     mx.transform(n, rot);
 
-    return { p, n };
+    return { p, n, u, v };
   }
 
   setupCoverBuffers(wgl, divisions = 50) {
@@ -600,6 +629,7 @@ class Cylinder {
 
       let points = [...[0, 0, v - 0.5]];
       let normals = [...n];
+      let uv = [0, 0];
 
       for (let i = 0; i <= divisions; i++) {
         const u = i / divisions;
@@ -607,18 +637,21 @@ class Cylinder {
 
         points.push(...p);
         normals.push(...n);
+        uv.push(u, 1);
       }
       const idx = arrayOf(points.length / 3);
 
       const pointsBuffer = wgl.createBuffer(points);
       const normalsBuffer = wgl.createBuffer(normals);
       const idxBuffer = wgl.createIndexBuffer(idx);
+      const uvBuffer = wgl.createBuffer(uv);
 
       this.buffers.covers.push({
         v,
-        points: pointsBuffer,
-        normals: normalsBuffer,
-        idx: idxBuffer,
+        pointsBuffer,
+        normalsBuffer,
+        idxBuffer,
+        uvBuffer,
       });
     });
   }
@@ -631,8 +664,7 @@ class Cylinder {
 
   draw(wgl, mode = wgl.gl.TRIANGLE_STRIP) {
     if (!this.buffers) this.setupBuffers(wgl);
-    const { pointsBuffer, normalsBuffer, idxBuffer } = this.buffers;
-    wgl.drawFromBuffers(pointsBuffer, normalsBuffer, idxBuffer, mode);
+    wgl.drawFromBuffersObject(this.buffers, mode);
     this.drawCovers(wgl);
   }
   drawCovers(wgl) {
@@ -640,12 +672,7 @@ class Cylinder {
     if (!coverBuffers) return;
 
     this.buffers.covers.forEach((buf) => {
-      wgl.drawFromBuffers(
-        buf.points,
-        buf.normals,
-        buf.idx,
-        wgl.gl.TRIANGLE_FAN
-      );
+      wgl.drawFromBuffersObject(buf, wgl.gl.TRIANGLE_FAN);
     });
   }
 }
@@ -664,7 +691,7 @@ class Sphere {
     const p = mx.vec();
     mx.transform(p, mat);
 
-    return { p, n: mx.norm(p) };
+    return { p, n: mx.norm(p), u, v };
   }
 
   setupBuffers(wgl, rows = 50, cols = 50) {
@@ -674,8 +701,7 @@ class Sphere {
 
   draw(wgl, mode = wgl.gl.TRIANGLE_STRIP) {
     if (!this.buffers) this.setupBuffers(wgl);
-    const { pointsBuffer, normalsBuffer, idxBuffer } = this.buffers;
-    wgl.drawFromBuffers(pointsBuffer, normalsBuffer, idxBuffer, mode);
+    wgl.drawFromBuffersObject(this.buffers, mode);
   }
 }
 
