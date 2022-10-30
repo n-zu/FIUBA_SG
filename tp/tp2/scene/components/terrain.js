@@ -34,7 +34,8 @@ const getCenterGeometry = (wgl) => {
     wgl,
     40,
     3 * surface.shape.segNum,
-    false
+    false,
+    [10, 15]
   );
 };
 const getFloorSurface = () => {
@@ -63,7 +64,8 @@ const getFloorGeometry = (wgl) => {
     wgl,
     8,
     3 * surface.shape.segNum,
-    false
+    false,
+    [8 * 5, 70]
   );
 };
 

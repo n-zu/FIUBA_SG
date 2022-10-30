@@ -138,7 +138,8 @@ const getTowerGeometry = (wgl, height) => {
     wgl,
     20,
     parseInt(20 * height),
-    false
+    false,
+    [8, parseInt(8 * height)]
   );
   return geometry;
 };
@@ -248,7 +249,7 @@ const initiate = (wgl, width, length, floors) => {
   const f_dif = Math.abs(_floors - glob_geometry.floors ?? 0);
 
   if (!glob_geometry.initiated) {
-    glob_geometry.cube = new Cube().setupBuffers(wgl);
+    glob_geometry.cube = new Cube().setupBuffers(wgl, [5, 100]);
     glob_geometry.window = getWindowGeometry(wgl);
   }
 
