@@ -333,10 +333,11 @@ const initiate = (wgl, number, height, angle) => {
     [1 * texScale, 30 * texScale],
     [2 * texScale, 1 * texScale]
   );
-  glob_geometry.gate_door = new Cube().setupBuffers(wgl, [
-    5 * texScale * height,
-    70 * texScale,
-  ]);
+  glob_geometry.gate_door = new Cube().setupBuffers(
+    wgl,
+    [5 * texScale * height, 70 * texScale],
+    [1, 0.1]
+  );
   glob_geometry.initiated = true;
 
   return true;

@@ -24,9 +24,9 @@ var settings = {
     stone: [0.5, 0.5, 0.5],
     wood: "wood",
     dark_wood: [0.4, 0.3, 0.1],
-    grass: [0.5, 0.8, 0.5],
+    grass: "grass",
     dark_grass: [0.5 * 0.88, 0.8 * 0.88, 0.5 * 0.88],
-    water: [0.5, 0.5, 0.8],
+    water: "water",
     castle: [0.9, 0.9, 0.6],
     window: [0.2, 0.2, 0.2],
     tower_tip: [0.2, 0.2, 0.5],
@@ -44,6 +44,14 @@ var settings = {
     {
       name: "wood",
       src: "assets/textures/wood/diffuse.jpg",
+    },
+    {
+      name: "grass",
+      src: "assets/textures/grass/diffuse.png",
+    },
+    {
+      name: "water",
+      src: "assets/textures/water/diffuse.jpg",
     },
   ],
 };

@@ -542,8 +542,24 @@ class SweepSolid {
     if (useCovers) {
       const start = this.path.point(0);
       const end = this.path.point(1);
-      const startBuff = setup2DBuffers(wgl, start, this.shape, cols, 0, coversUvScale,coversAxis);
-      const endBuffers = setup2DBuffers(wgl, end, this.shape, cols, 1, coversUvScale,coversAxis);
+      const startBuff = setup2DBuffers(
+        wgl,
+        start,
+        this.shape,
+        cols,
+        0,
+        coversUvScale,
+        coversAxis
+      );
+      const endBuffers = setup2DBuffers(
+        wgl,
+        end,
+        this.shape,
+        cols,
+        1,
+        coversUvScale,
+        coversAxis
+      );
       this.buffers.covers = [startBuff, endBuffers];
     }
 
@@ -596,8 +612,16 @@ class Cube {
     this.solid = new SweepSolid(surface, path);
   }
 
-  setupBuffers(wgl, uvScale, coversUvScale) {
-    this.solid.setupBuffers(wgl, 2, 4 * 3, true, uvScale, coversUvScale,2);
+  setupBuffers(wgl, uvScale, coversUvScale, coversAxis = 2) {
+    this.solid.setupBuffers(
+      wgl,
+      2,
+      4 * 3,
+      true,
+      uvScale,
+      coversUvScale,
+      coversAxis
+    );
     return this;
   }
 

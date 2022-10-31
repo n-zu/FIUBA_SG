@@ -35,7 +35,7 @@ const getCenterGeometry = (wgl) => {
     40,
     3 * surface.shape.segNum,
     false,
-    [10, 15]
+    [40, 50]
   );
 };
 const getFloorSurface = () => {
@@ -65,7 +65,7 @@ const getFloorGeometry = (wgl) => {
     8,
     3 * surface.shape.segNum,
     false,
-    [8 * 5, 70]
+    [8 * 10, 140]
   );
 };
 
@@ -73,7 +73,8 @@ let cache = undefined;
 const Terrain = (wgl) => {
   if (cache) return cache;
 
-  const cube = new Cube(1).setupBuffers(wgl);
+  const cube = new Cube(1).setupBuffers(wgl, [5, 100], [1, 4]);
+  const water_cube = new Cube(1).setupBuffers(wgl, [1, 1], [3, 3]);
 
   const center = new Mesh(["center", getCenterGeometry(wgl), color.grass]);
   const bridge = new Mesh(
@@ -86,7 +87,7 @@ const Terrain = (wgl) => {
   );
   const floor = new Mesh(["floor", getFloorGeometry(wgl), color.grass]);
   const water = new Mesh(
-    ["bridge", cube, color.water],
+    ["bridge", water_cube, color.water],
     [
       Transform.translate([0, -0.5, 0]),
       Transform.scale([30, 3, 30]),
