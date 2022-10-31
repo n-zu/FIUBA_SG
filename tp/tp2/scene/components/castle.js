@@ -76,7 +76,7 @@ const getBuilding = (width, length, floors) => {
   );
   const fd = floor_division * 2;
   const divisor = new Mesh(
-    ["structure", glob_geometry.cube, color.castle],
+    ["structure", glob_geometry.thin_cube, color.castle],
     [Transform.scale([width + fd, fd / 2, length + fd])]
   );
 
@@ -238,7 +238,14 @@ const getWindowGeometry = (wgl, width, height, depth = window_depth) => {
     { normal: [0, 1, 0] }
   );
   const surface = getWindowSurface(width, height);
-  const geometry = new SweepSolid(surface, path).setupBuffers(wgl, 2, 30);
+  const geometry = new SweepSolid(surface, path).setupBuffers(
+    wgl,
+    2,
+    30,
+    true,
+    [1, 1],
+    [0.2, 0.2]
+  );
   return geometry;
 };
 
@@ -249,7 +256,8 @@ const initiate = (wgl, width, length, floors) => {
   const f_dif = Math.abs(_floors - glob_geometry.floors ?? 0);
 
   if (!glob_geometry.initiated) {
-    glob_geometry.cube = new Cube().setupBuffers(wgl, [5, 100]);
+    glob_geometry.cube = new Cube().setupBuffers(wgl, [5, 100], [4, 4]);
+    glob_geometry.thin_cube = new Cube().setupBuffers(wgl, [0.5, 100], [4, 4]);
     glob_geometry.window = getWindowGeometry(wgl);
   }
 

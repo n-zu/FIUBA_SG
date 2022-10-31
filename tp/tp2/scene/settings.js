@@ -27,9 +27,9 @@ var settings = {
     grass: "grass",
     dark_grass: [0.5 * 0.88, 0.8 * 0.88, 0.5 * 0.88],
     water: "water",
-    castle: [0.9, 0.9, 0.6],
-    window: [0.2, 0.2, 0.2],
-    tower_tip: [0.2, 0.2, 0.5],
+    castle: "castle",
+    window: "window",
+    tower_tip: "roof",
   },
 
   textures: [
@@ -52,6 +52,18 @@ var settings = {
     {
       name: "water",
       src: "assets/textures/water/diffuse.jpg",
+    },
+    {
+      name: "castle",
+      src: "assets/textures/castle/diffuse.jpeg",
+    },
+    {
+      name: "window",
+      src: "assets/textures/window/diffuse.jpg",
+    },
+    {
+      name: "roof",
+      src: "assets/textures/roof/diffuse2.png",
     },
   ],
 };
