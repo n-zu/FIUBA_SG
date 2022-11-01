@@ -5,6 +5,7 @@ https://polyhaven.com/a/castle_wall_slates
 ## Wood
 
 https://polyhaven.com/a/medieval_wood
+https://polyhaven.com/a/fine_grained_wood
 
 ## Grass
 

@@ -656,14 +656,14 @@ class Cylinder {
     return { p, n, u, v };
   }
 
-  setupCoverBuffers(wgl, divisions = 50) {
+  setupCoverBuffers(wgl, divisions = 50, uvScale = [1, 1]) {
     this.buffers.covers = [];
     [0, 1].forEach((v) => {
       const n = [0, 0, 2 * v - 1];
 
       let points = [...[0, 0, v - 0.5]];
       let normals = [...n];
-      let uv = [0, 0];
+      let uv = [0.5, 0.5];
 
       for (let i = 0; i <= divisions; i++) {
         const u = i / divisions;
@@ -671,7 +671,10 @@ class Cylinder {
 
         points.push(...p);
         normals.push(...n);
-        uv.push(1, u);
+        uv.push(
+          (-Math.cos(u * Math.PI * 2) * uvScale[0] + 1) / 2, // u
+          (Math.sin(u * Math.PI * 2) * uvScale[1] + 1) / 2 // v
+        );
       }
       const idx = arrayOf(points.length / 3);
 
@@ -690,9 +693,9 @@ class Cylinder {
     });
   }
 
-  setupBuffers(wgl, divisions = 50) {
-    setup3DBuffers(this, wgl, divisions, 1);
-    this.setupCoverBuffers(wgl, divisions);
+  setupBuffers(wgl, divisions = 50, uvScale, coversUvScale) {
+    setup3DBuffers(this, wgl, divisions, 1, uvScale);
+    this.setupCoverBuffers(wgl, divisions, coversUvScale);
     return this;
   }
 

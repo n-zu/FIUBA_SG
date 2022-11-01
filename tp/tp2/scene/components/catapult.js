@@ -20,7 +20,7 @@ const base_height = 1.1;
 const base_offset = -0.25;
 
 const getWheels = (wgl) => {
-  const wheel = new Cylinder(0.225).setupBuffers(wgl);
+  const wheel = new Cylinder(0.225).setupBuffers(wgl, 50, [5, 0.5], [0.5, 0.5]);
   const wheel1 = new Mesh(
     ["wheel1", wheel, color.wood],
     [
@@ -172,11 +172,19 @@ const setupArm = (wgl) => {
     }
   );
   const surface = new Surface(shape);
-  const geo = new SweepSolid(surface, path).setupBuffers(wgl, 2, 4 * 3);
+  const geo = new SweepSolid(surface, path).setupBuffers(
+    wgl,
+    2,
+    4 * 3,
+    true,
+    [0.5, 30],
+    [2, 0.1],
+    [2, 1]
+  );
 
   glob_geometry.arm = geo;
 
-  const cube = new Cube().setupBuffers(wgl);
+  const cube = new Cube().setupBuffers(wgl, [0.1, 10], [0.2, 0.4]);
   glob_geometry.shovel = new Mesh(
     ["shovel", cube, color.wood],
     [Transform.scale([0.5, 0.075, 0.7]), Transform.translate([0, 0.1, 2])]
@@ -224,7 +232,15 @@ const setupWeight = (wgl) => {
     }
   );
   const surface = new Surface(shape);
-  const geo = new SweepSolid(surface, path).setupBuffers(wgl, 2, 4 * 3);
+  const geo = new SweepSolid(surface, path).setupBuffers(
+    wgl,
+    2,
+    4 * 3,
+    true,
+    [0.1, 5],
+    [0.2, 0.2],
+    [2, 1]
+  );
 
   const side1 = new Mesh(
     ["side1", geo, color.wood],
@@ -235,7 +251,7 @@ const setupWeight = (wgl) => {
     [Transform.translate([-0.15, 0, 0])]
   );
 
-  const cube = new Cube().setupBuffers(wgl);
+  const cube = new Cube().setupBuffers(wgl, [1, 10], [0.5, 0.5]);
   const weight = new Mesh(
     ["weight", cube, color.stone],
     [
@@ -277,7 +293,7 @@ const initiate = (wgl) => {
   if (glob_geometry.initiated) return;
   glob_geometry.initiated = true;
 
-  const cube = new Cube();
+  const cube = new Cube().setupBuffers(wgl, [0.1, 20], [0.5, 1], [0, 2]);
   const floor = new Mesh(
     ["floor", cube, color.wood],
     [
@@ -297,7 +313,7 @@ const initiate = (wgl) => {
 
   glob_geometry.base = new Mesh(["base"], null, [
     floor,
-    shadow,
+    shadow.h,
     ...wheels,
     ...shafts,
     ...sides,

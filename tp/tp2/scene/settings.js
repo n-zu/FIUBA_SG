@@ -21,9 +21,9 @@ var settings = {
 
   color: {
     wall: "stone_wall",
-    stone: [0.5, 0.5, 0.5],
+    stone: "stone",
     wood: "wood",
-    dark_wood: [0.4, 0.3, 0.1],
+    dark_wood: "dark_wood",
     grass: "grass",
     dark_grass: [0.5 * 0.88, 0.8 * 0.88, 0.5 * 0.88],
     water: "water",
@@ -46,6 +46,10 @@ var settings = {
       src: "assets/textures/wood/diffuse.jpg",
     },
     {
+      name: "dark_wood",
+      src: "assets/textures/wood/dark_wood.jpg",
+    },
+    {
       name: "grass",
       src: "assets/textures/grass/diffuse.png",
     },
@@ -64,6 +68,10 @@ var settings = {
     {
       name: "roof",
       src: "assets/textures/roof/diffuse2.png",
+    },
+    {
+      name: "stone",
+      src: "assets/textures/stone/diffuse.jpg",
     },
   ],
 };
