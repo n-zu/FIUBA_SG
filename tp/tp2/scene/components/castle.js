@@ -68,7 +68,7 @@ const getWindows = (width, length) => {
 const getBuilding = (width, length, floors) => {
   const windows = getWindows(width, length);
   const structure = new Mesh(
-    ["structure", glob_geometry.cube, color.castle],
+    ["structure", glob_geometry.structure, color.castle],
     [
       Transform.scale([width, floor_height, length]),
       Transform.translate([0, floor_height / 2, 0]),
@@ -109,17 +109,17 @@ const getTowerSurface = (height) => {
 
     [r1 / 2, height + d, 0],
     [r1, height, 0],
-    [r1, height - th, 0],
+    [r1, height - th / 2, 0],
 
-    [r1, height, 0],
+    [r1, height - th / 2, 0],
     [r1, height - th, 0],
     [r1, height - th - ts / 2, 0],
 
     [r2, height - th - ts / 2, 0],
     [r2, height - th - ts, 0],
-    [r2, d, 0],
+    [r2, (height - th - ts) / 2, 0],
 
-    [r2, d, 0],
+    [r2, (height - th - ts) / 2, 0],
     [r2, 0, 0],
   ];
 
@@ -139,7 +139,7 @@ const getTowerGeometry = (wgl, height) => {
     20,
     parseInt(20 * height),
     false,
-    [8, parseInt(8 * height)]
+    [8, parseInt(3 * height)]
   );
   return geometry;
 };
@@ -256,8 +256,20 @@ const initiate = (wgl, width, length, floors) => {
   const f_dif = Math.abs(_floors - glob_geometry.floors ?? 0);
 
   if (!glob_geometry.initiated) {
-    glob_geometry.cube = new Cube().setupBuffers(wgl, [5, 100], [4, 4]);
-    glob_geometry.thin_cube = new Cube().setupBuffers(wgl, [0.5, 100], [4, 4]);
+    glob_geometry.structure = new Cube().setupBuffers(
+      wgl,
+      [5, 100],
+      [4, 4],
+      undefined,
+      true
+    );
+    glob_geometry.thin_cube = new Cube().setupBuffers(
+      wgl,
+      [0.2, 100],
+      [4, 4],
+      undefined,
+      true
+    );
     glob_geometry.window = getWindowGeometry(wgl);
   }
 

@@ -130,22 +130,6 @@ export class WebGL {
     return this;
   }
 
-  setColor(color) {
-    this.color = color;
-    this._setColor(color);
-
-    return this;
-  }
-  _setColor(color) {
-    const modelColor = color ?? [1.0, 0, 1.0];
-
-    const colorUniform = this.gl.getUniformLocation(
-      this.glProgram,
-      "modelColor"
-    );
-    this.gl.uniform3fv(colorUniform, modelColor);
-  }
-
   _setTexture(name = "default") {
     const gl = this.gl;
     /* FIXME
@@ -162,6 +146,10 @@ export class WebGL {
     gl.bi;
     gl.bindTexture(gl.TEXTURE_2D, tex);
     this._current_texture = name;
+  }
+  setTexture(name) {
+    this.current_texture = name;
+    this._setTexture(name);
   }
 
   async initTextures(gl, textures = defaultTextures) {
@@ -243,9 +231,7 @@ export class WebGL {
     if (this.drawSurfaces) gl.drawElements(mode, nvp, gl.UNSIGNED_SHORT, 0);
 
     if (this.drawLines) {
-      this._setColor([0.4, 0.4, 0.4]);
       gl.drawElements(this.gl.LINE_STRIP, nvp, gl.UNSIGNED_SHORT, 0);
-      this._setColor(this.color);
     }
   };
 
@@ -266,9 +252,9 @@ export class WebGL {
     if (this.drawSurfaces) gl.drawElements(mode, nvp, gl.UNSIGNED_SHORT, 0);
 
     if (this.drawLines) {
-      this._setColor([0.4, 0.4, 0.4]);
+      this._setTexture();
       gl.drawElements(this.gl.LINE_STRIP, nvp, gl.UNSIGNED_SHORT, 0);
-      this._setColor(this.color);
+      this._setTexture(this.current_texture);
     }
   };
 

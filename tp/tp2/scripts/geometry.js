@@ -22,7 +22,14 @@ const repeat = (elem, n) => Array(n).fill(elem);
 
 // Object
 
-export const setup3DBuffers = (obj, wgl, rows, cols, uvScale = [1, 1]) => {
+export const setup3DBuffers = (
+  obj,
+  wgl,
+  rows,
+  cols,
+  uvScale = [1, 1],
+  invUv = false
+) => {
   const points = [];
   const normals = [];
   const uv = [];
@@ -35,7 +42,8 @@ export const setup3DBuffers = (obj, wgl, rows, cols, uvScale = [1, 1]) => {
 
       points.push(...p);
       normals.push(...n);
-      uv.push(u * uvScale[0], v * uvScale[1]);
+      if (invUv) uv.push(v * uvScale[1], u * uvScale[0]);
+      else uv.push(u * uvScale[0], v * uvScale[1]);
     }
   }
 
@@ -542,9 +550,10 @@ class SweepSolid {
     useCovers = true,
     uvScale,
     coversUvScale,
-    coversPlane
+    coversPlane,
+    invUv
   ) {
-    setup3DBuffers(this, wgl, rows, cols, uvScale);
+    setup3DBuffers(this, wgl, rows, cols, uvScale, invUv);
 
     this.buffers.covers = undefined;
     if (useCovers) {
@@ -620,7 +629,7 @@ class Cube {
     this.solid = new SweepSolid(surface, path);
   }
 
-  setupBuffers(wgl, uvScale, coversUvScale, coversPLane = [0, 2]) {
+  setupBuffers(wgl, uvScale, coversUvScale, coversPLane = [0, 2], invUv) {
     this.solid.setupBuffers(
       wgl,
       2,
@@ -628,7 +637,8 @@ class Cube {
       true,
       uvScale,
       coversUvScale,
-      coversPLane
+      coversPLane,
+      invUv
     );
     return this;
   }

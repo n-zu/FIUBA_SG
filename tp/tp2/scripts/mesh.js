@@ -28,7 +28,7 @@ class Mesh {
 
     if (this.geometry) {
       wgl.setModelMatrix(transform);
-      wgl._setTexture(this.texture);
+      wgl.setTexture(this.texture);
       this.geometry.draw(wgl);
     }
 
