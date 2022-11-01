@@ -17,7 +17,7 @@ wgl
 
 settings.wgl = wgl;
 
-const terrain = Terrain(wgl);
+const getTerrain = (t) => Terrain(wgl, t);
 const getWalls = () =>
   Walls(wgl, settings.wall_number, settings.wall_height, settings.wall_angle);
 const getCastle = () =>
@@ -42,7 +42,7 @@ const getCatapult = () => {
 
 const getScene = (t) =>
   new Mesh(["root"], null, [
-    terrain,
+    getTerrain(t),
     getWalls(),
     getCastle(),
     getCatapult(),

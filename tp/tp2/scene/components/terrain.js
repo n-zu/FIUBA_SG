@@ -7,8 +7,9 @@ import {
   SweepSolid,
 } from "../../scripts/geometry.js";
 
-const color = settings.color;
 const depth = -4;
+const color = settings.color;
+var glob_geometry = {};
 
 const getCenterSurface = () => {
   const x1 = 8;
@@ -69,15 +70,31 @@ const getFloorGeometry = (wgl) => {
   );
 };
 
-let cache = undefined;
-const Terrain = (wgl) => {
-  if (cache) return cache;
+const getWater = (t) =>
+  new Mesh(
+    ["bridge", glob_geometry.water_cube, color.water],
+    [
+      Transform.translate([0, -0.5, 0]),
+      Transform.scale([30, 3, 30]),
+      Transform.translate([0, -0.5, 0]),
+      Transform.rotate([t / 5, [0, 1, 0]]),
+    ]
+  );
+
+let initiated = false;
+const initiate = (wgl) => {
+  if (initiated) return;
+  initiated = true;
 
   const cube = new Cube(1).setupBuffers(wgl, [5, 100], [1, 4]);
-  const water_cube = new Cube(1).setupBuffers(wgl, [1, 1], [3, 3]);
+  glob_geometry.water_cube = new Cube(1).setupBuffers(wgl, [1, 1], [3, 3]);
 
-  const center = new Mesh(["center", getCenterGeometry(wgl), color.grass]);
-  const bridge = new Mesh(
+  glob_geometry.center = new Mesh([
+    "center",
+    getCenterGeometry(wgl),
+    color.grass,
+  ]);
+  glob_geometry.bridge = new Mesh(
     ["bridge", cube, color.grass],
     [
       Transform.translate([0, 0, 0.5]),
@@ -85,18 +102,16 @@ const Terrain = (wgl) => {
       Transform.translate([0, -1.7, 8]),
     ]
   );
-  const floor = new Mesh(["floor", getFloorGeometry(wgl), color.grass]);
-  const water = new Mesh(
-    ["bridge", water_cube, color.water],
-    [
-      Transform.translate([0, -0.5, 0]),
-      Transform.scale([30, 3, 30]),
-      Transform.translate([0, -0.5, 0]),
-    ]
-  );
+  glob_geometry.floor = new Mesh(["floor", getFloorGeometry(wgl), color.grass]);
+};
+
+const Terrain = (wgl, t) => {
+  initiate(wgl);
+
+  const { center, bridge, floor } = glob_geometry;
+  const water = getWater(t);
 
   const terrain = new Mesh(["Terrain"], null, [center, bridge, floor, water]);
-  cache = terrain;
 
   return terrain;
 };

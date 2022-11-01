@@ -178,8 +178,8 @@ const setupArm = (wgl) => {
     4 * 3,
     true,
     [0.5, 30],
-    [2, 0.1],
-    [2, 1]
+    [0.1, 2],
+    [1, 2]
   );
 
   glob_geometry.arm = geo;
