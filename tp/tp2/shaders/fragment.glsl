@@ -18,11 +18,19 @@ void main(void) {
 */
 
   vec3 normalColor = vec3(0.5, 0.5, 0.5) + 0.5 * vNormal;
-  float lightFactor = 0.6 + 0.15*vNormal.y + 0.05 * vNormal.z + 0.05 * vNormal.x; 
+  float lightFactor = 0.6 + 0.3*vNormal.y + 0.05 * vNormal.z + 0.05 * vNormal.x; 
+
 
   if ( useTexture ) {
-    gl_FragColor = texture2D(texture, vUV);
-    // gl_FragColor = vec4(modelColor*lightFactor, 1.0);
+
+    vec3 tex1 = texture2D(texture, vUV*1.00).xyz;
+    vec3 tex2 = texture2D(texture, vUV*0.64).xyz;
+    vec3 tex3 = texture2D(texture, vUV*0.17).xyz;
+
+    vec3 col1 = mix(tex1, tex2, 0.3);
+    vec3 col2 = mix(col1, tex3, 0.3);
+
+    gl_FragColor = vec4(col2*lightFactor, 1.0);
   } else {
     gl_FragColor = vec4(normalColor, 1.0);
   }

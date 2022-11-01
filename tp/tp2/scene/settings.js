@@ -4,7 +4,7 @@ var settings = {
 
   wall_number: 6,
   wall_height: 1.5,
-  wall_angle: 15,
+  wall_angle: 0,
 
   camera_mode: "Center",
 

@@ -16,6 +16,12 @@ const _radius = 7;
 const battlements_height = 0.2;
 const tower_diff = 1.5 * battlements_height;
 
+const lerp_points = (points, idx1, idx2, t = 0.5) => {
+  const p1 = points[idx1];
+  const p2 = points[idx2];
+  return p1.map((v, i) => v + (p2[i] - v) * t);
+};
+
 const getPoints = (number = 6, radius = _radius) => {
   let points = [];
   let p = [0, 0, radius];
@@ -48,33 +54,16 @@ const getTowerSurface = (height) => {
     [x2, y1, 0],
     [x3, 0, 0],
   ];
+  const lp = (idx1, idx2) => lerp_points(p, idx1, idx2);
 
   const points = [
-    p[0],
-    p[1],
-
-    p[0],
-    p[1],
-    p[2],
-
-    p[1],
-    p[2],
-    p[3],
-
-    p[2],
-    p[3],
-    p[4],
-
-    p[3],
-    p[4],
-    [p[4][0] - bh, p[4][1] - bh, 0],
-
-    [p[5][0], p[5][1] + bh, 0],
-    p[5],
-    [p[5][0], p[5][1] - bh, 0],
-
-    [p[6][0], tower_diff, 0],
-    p[6],
+    ...[p[0], lp(0, 1)],
+    ...[lp(0, 1), p[1], lp(1, 2)],
+    ...[lp(1, 2), p[2], lp(2, 3)],
+    ...[lp(2, 3), p[3], lp(3, 4)],
+    ...[lp(3, 4), p[4], [p[4][0] - bh, p[4][1] - bh, 0]],
+    ...[[p[5][0], p[5][1] + bh, 0], p[5], [p[5][0], p[5][1] - bh, 0]],
+    ...[[p[6][0], tower_diff, 0], p[6]],
   ];
 
   const shape = new Spline(points, {
@@ -113,51 +102,34 @@ const getTowers = (wgl, points, height) =>
 const getWallSurface = (height) => {
   const bh = battlements_height;
 
-  const y1 = height - 2 * bh;
+  const y1 = height;
   const y2 = height - bh;
-  const y3 = height;
 
-  const r1 = 0.6;
-  const r2 = 0.4;
+  const x0 = 0.7;
+  const x1 = 0.5;
+  const x2 = x1 - bh;
 
   const p = [
-    [-r1, 0, 0],
-    [-r2, y1, 0],
-    [-r2, y3, 0],
-    [-r2 + bh / 2, y3, 0],
-    [-r2 + bh / 2, y2, 0],
-
-    [r2 - bh / 2, y2, 0],
-    [r2 - bh / 2, y3, 0],
-    [r2, y3, 0],
-    [r2, y1, 0],
-    [r1, 0, 0],
+    [-x0, 0, 0], //0
+    [-x1, y1, 0],
+    [-x2, y1, 0],
+    [-x2, y2, 0],
+    [x2, y2, 0],
+    [x2, y1, 0],
+    [x1, y1, 0],
+    [x0, 0, 0], //7
   ];
-
-  const p23 = [-r2 + bh / 4, y3, 0];
-  const p67 = [r2 - bh / 4, y3, 0];
+  const lp = (idx1, idx2) => lerp_points(p, idx1, idx2);
 
   const points = [
-    p[0],
-    [p[0][0], tower_diff, 0],
-
-    [p[1][0], p[1][1] - tower_diff, 0],
-    p[1],
-    p[2],
-
-    ...[p[2], p23, p[3]],
-
-    ...[p[3], p[4], p[5]],
-    ...[p[4], p[5], p[6]],
-
-    ...[p[6], p67, p[7]],
-
-    p[7],
-    p[8],
-    [p[8][0], p[8][1] - tower_diff, 0],
-
-    [p[9][0], 2 * tower_diff, 0],
-    p[9],
+    ...[p[0], [-x0, height / 4, 0]],
+    ...[[-x1, (height * 3) / 4, 0], p[1], lp(1, 2)],
+    ...[lp(1, 2), p[2], lp(2, 3)],
+    ...[lp(2, 3), p[3], lp(3, 4)],
+    ...[lp(3, 4), p[4], lp(4, 5)],
+    ...[lp(4, 5), p[5], lp(5, 6)],
+    ...[lp(5, 6), p[6], [x1, (height * 3) / 4, 0]],
+    ...[[x0, height / 4, 0], p[7]],
   ];
 
   const shape = new Spline(points, {

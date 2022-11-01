@@ -143,7 +143,6 @@ export class WebGL {
       this.textures.find((t) => t.name === name) || this.textures[0];
     const tex = texture.texture;
 
-    gl.bi;
     gl.bindTexture(gl.TEXTURE_2D, tex);
     this._current_texture = name;
   }
@@ -252,7 +251,7 @@ export class WebGL {
     if (this.drawSurfaces) gl.drawElements(mode, nvp, gl.UNSIGNED_SHORT, 0);
 
     if (this.drawLines) {
-      this._setTexture();
+      this._setTexture("window");
       gl.drawElements(this.gl.LINE_STRIP, nvp, gl.UNSIGNED_SHORT, 0);
       this._setTexture(this.current_texture);
     }
