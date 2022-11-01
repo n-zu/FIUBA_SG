@@ -116,7 +116,15 @@ const getSides = (wgl) => {
     }
   );
   const surface = new Surface(shape);
-  const geo = new SweepSolid(surface, path).setupBuffers(wgl, 2, 4 * 3);
+  const geo = new SweepSolid(surface, path).setupBuffers(
+    wgl,
+    2,
+    4 * 3,
+    true,
+    [0.1, 10],
+    [0.5, 1],
+    [2, 1]
+  );
 
   const side1 = new Mesh(
     ["side1", geo, color.wood],

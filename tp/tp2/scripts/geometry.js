@@ -63,9 +63,11 @@ export const setup2DBuffers = (
   divisions,
   reverse = false,
   uvScale,
-  axis
+  uvPlane
 ) =>
-  shape.alignTo(point).getBuffers(wgl, 1 / divisions, reverse, uvScale, axis);
+  shape
+    .alignTo(point)
+    .getBuffers(wgl, 1 / divisions, reverse, uvScale, uvPlane);
 
 class SegCon {
   static default = () => (u) => default_convexity;
@@ -433,7 +435,13 @@ class Surface {
     }
   }
 
-  getBuffers(wgl, delta = 0.01, reverse = false, uvScale = [1, 1], axis = 1) {
+  getBuffers(
+    wgl,
+    delta = 0.01,
+    reverse = false,
+    uvScale = [1, 1],
+    plane = [0, 1]
+  ) {
     const { p: center, t: _t } = this.getOrientation();
     const t = reverse ? mx.neg(_t) : _t;
 
@@ -448,8 +456,8 @@ class Surface {
       points.push(...p);
       normals.push(...t);
       // Surface must be defined in 1: x,y, 2:x,z
-      _u.push(p[0]);
-      _v.push(p[axis]);
+      _u.push(p[plane[0]]);
+      _v.push(p[plane[1]]);
     }
 
     const n_points = points.length / 3;
@@ -534,7 +542,7 @@ class SweepSolid {
     useCovers = true,
     uvScale,
     coversUvScale,
-    coversAxis
+    coversPlane
   ) {
     setup3DBuffers(this, wgl, rows, cols, uvScale);
 
@@ -549,7 +557,7 @@ class SweepSolid {
         cols,
         0,
         coversUvScale,
-        coversAxis
+        coversPlane
       );
       const endBuffers = setup2DBuffers(
         wgl,
@@ -558,7 +566,7 @@ class SweepSolid {
         cols,
         1,
         coversUvScale,
-        coversAxis
+        coversPlane
       );
       this.buffers.covers = [startBuff, endBuffers];
     }
@@ -612,7 +620,7 @@ class Cube {
     this.solid = new SweepSolid(surface, path);
   }
 
-  setupBuffers(wgl, uvScale, coversUvScale, coversAxis = 2) {
+  setupBuffers(wgl, uvScale, coversUvScale, coversPLane = [0, 2]) {
     this.solid.setupBuffers(
       wgl,
       2,
@@ -620,7 +628,7 @@ class Cube {
       true,
       uvScale,
       coversUvScale,
-      coversAxis
+      coversPLane
     );
     return this;
   }
@@ -663,7 +671,7 @@ class Cylinder {
 
         points.push(...p);
         normals.push(...n);
-        uv.push(u, 1);
+        uv.push(1, u);
       }
       const idx = arrayOf(points.length / 3);
 
