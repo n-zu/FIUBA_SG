@@ -1,6 +1,10 @@
 import { mx } from "../../scripts/util.js";
 import { Mesh } from "../../scripts/mesh.js";
 import { Sphere } from "../../scripts/geometry.js";
+
+const color = settings.color;
+const fireLight = settings.lightColor.fire;
+
 let animation_meshes = [];
 let animation_meshes_queue = [];
 const queueAnimation = (mesh) => {
@@ -26,7 +30,7 @@ class Ammo {
     this.initialTransform = initialTransform;
     this.str = settings.catapult_str;
 
-    this.mesh = new Mesh(["Ammo", new Sphere(0.2), settings.color.stone]);
+    this.mesh = new Mesh(["Ammo", new Sphere(0.2), color.ammo, fireLight]);
     this.transform = initialTransform;
   }
   update(t) {
@@ -42,8 +46,11 @@ class Ammo {
 
     return anim_t < 1;
   }
-  draw(...params) {
-    this.mesh.draw(...params);
+  _draw(...params) {
+    this.mesh._draw(...params);
+  }
+  setup(...params) {
+    this.mesh.setup(...params);
   }
 }
 

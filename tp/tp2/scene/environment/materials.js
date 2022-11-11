@@ -67,6 +67,15 @@ const materials = [
     name: "stone",
     src: "assets/textures/stone/diffuse.jpg",
   },
+  {
+    ...materialTemplate,
+    name: "fire",
+    src: "assets/textures/wood/diffuse.jpg",
+    ambient: [0.5 * 6, 0.4 * 6, 0.3 * 6],
+    diffuse: 0,
+    specular: [3, 0, 0],
+    gloss: 6,
+  },
 ];
 
 export default materials;

@@ -30,5 +30,11 @@ var settings = {
     castle: "castle",
     window: "window",
     tower_tip: "roof",
+    ammo: "fire",
+  },
+
+  lightColor: {
+    sun: [0.26, 0.23, 0.2],
+    fire: [0.5, 0.4, 0.3],
   },
 };

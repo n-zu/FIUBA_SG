@@ -1,15 +1,17 @@
-import { mat4 } from "./util.js";
+import { mat4, mx } from "./util.js";
 
 class Mesh {
   name = "3D Object";
   geometry = null;
-  transform = mat4.create();
+  transform = mx.mat();
+  //modelMatrix = mx.mat(); /// draw is not working so no need for this
   children = [];
 
   constructor(attributes, transformations, children) {
     if (attributes?.[0]) this.name = attributes?.[0];
     if (attributes?.[1]) this.geometry = attributes?.[1];
     if (attributes?.[2]) this.material = attributes?.[2];
+    if (attributes?.[3]) this.lightColor = attributes?.[3];
 
     transformations?.[0] &&
       transformations.reverse().forEach(({ pos, rot, scale }) => {
@@ -20,7 +22,7 @@ class Mesh {
     if (children) this.children = children;
   }
 
-  draw(wgl, _transform = mat4.create()) {
+  _draw(wgl, _transform = mat4.create()) {
     let transform = mat4.clone(_transform);
     mat4.multiply(transform, transform, this.transform);
 
@@ -30,8 +32,47 @@ class Mesh {
       this.geometry.draw(wgl);
     }
 
-    this.children.forEach((child) => child?.draw(wgl, transform));
+    this.children.forEach((child) => child?._draw(wgl, transform));
   }
+
+  addLight(lights, transform) {
+    if (!this.lightColor) return;
+
+    lights.push({
+      pos: mx.transformed([0, 0, 0], transform),
+      color: this.lightColor,
+    });
+  }
+
+  setup(wgl, lights, _transform = mat4.create()) {
+    let transform = mat4.clone(_transform);
+    mat4.multiply(transform, transform, this.transform);
+
+    if (this.geometry) {
+      //this.modelMatrix = transform;
+      this.addLight(lights, transform);
+    }
+
+    this.children.forEach((child) => {
+      try {
+        child?.setup(wgl, lights, transform);
+      } catch (e) {
+        console.log(child);
+      }
+    });
+  }
+
+  // FIXME: For some reason, this is not working
+  // Only the last castle floor is being drawn
+  /*draw(wgl) {
+    if (this.geometry) {
+      wgl.setModelMatrix(this.modelMatrix);
+      wgl.setMaterial(this.material);
+      this.geometry.draw(wgl);
+    }
+
+    this.children.forEach((child) => child?.draw(wgl));
+  }*/
 }
 
 class Transform {

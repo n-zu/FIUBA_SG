@@ -10,6 +10,7 @@ import {
 } from "../../scripts/geometry.js";
 
 const color = settings.color;
+const fireLight = settings.lightColor.fire;
 var glob_geometry = {};
 
 const rad = (deg) => (deg * Math.PI) / 180;
@@ -202,7 +203,7 @@ const setupArm = (wgl) => {
 
   const sphere = new Sphere(0.2).setupBuffers(wgl);
   glob_geometry.ammo = new Mesh(
-    ["ammo", sphere, color.stone],
+    ["ammo", sphere, color.ammo, fireLight],
     [Transform.translate([0, 0.3 + 0.075 / 2, 2])]
   );
 };

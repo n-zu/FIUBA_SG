@@ -53,8 +53,22 @@ const getScene = (t) =>
     ...animation_meshes,
   ]);
 
+const setLights = (lights) => {
+  wgl.setLights({
+    directional: {
+      dir: [1, 1, 1],
+      color: settings.lightColor.sun,
+    },
+    points: lights,
+  });
+};
+
 const drawScene = (t) => {
-  getScene(t / 1000).draw(wgl);
+  const scene = getScene(t / 1000);
+  const lights = [];
+  scene.setup(wgl, lights);
+  setLights(lights);
+  scene._draw(wgl);
 };
 
 const tick = (t) => {
