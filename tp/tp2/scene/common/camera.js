@@ -1,4 +1,4 @@
-import { FreeCamera, OrbitalCamera } from "../scripts/camera.js";
+import { FreeCamera, OrbitalCamera } from "../../scripts/camera.js";
 
 settings.camera = new OrbitalCamera();
 setControlsClass("not_free");

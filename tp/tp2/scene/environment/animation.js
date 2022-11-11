@@ -1,6 +1,6 @@
-import { mx } from "../scripts/util.js";
-import { Mesh } from "../scripts/mesh.js";
-import { Sphere } from "../scripts/geometry.js";
+import { mx } from "../../scripts/util.js";
+import { Mesh } from "../../scripts/mesh.js";
+import { Sphere } from "../../scripts/geometry.js";
 let animation_meshes = [];
 let animation_meshes_queue = [];
 const queueAnimation = (mesh) => {
@@ -55,7 +55,7 @@ const shootAmmo = (t) => {
   queueAnimation(ammo);
 };
 
-// Catapult
+// -------------------------- CATAPULT -----------------------------
 const catapult = {
   state: undefined,
   anim_start: undefined,

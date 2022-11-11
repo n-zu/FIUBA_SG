@@ -95,3 +95,5 @@ export const loadImage = (path) => {
     };
   });
 };
+
+export const expandVecVec = (vec) => vec.reduce((acc, v) => [...acc, ...v], []);

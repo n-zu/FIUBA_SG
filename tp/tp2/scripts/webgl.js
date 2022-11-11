@@ -1,4 +1,4 @@
-import { loadImage, mat4, mx } from "./util.js";
+import { loadImage, mat4, mx, expandVecVec } from "./util.js";
 import { default_vertex, default_fragment } from "../shaders/index.js";
 
 const defaultMaterials = [
@@ -7,6 +7,19 @@ const defaultMaterials = [
     src: "https://raw.githubusercontent.com/gsimone/gridbox-prototype-materials/main/prototype_512x512_grey1.png",
   },
 ];
+
+const defaultLights = {
+  directional: {
+    dir: [1, 1, 1],
+    color: [0.5, 0.5, 0.5],
+  },
+  points: [
+    {
+      pos: [0, 50, 10],
+      color: [20, 20, 20],
+    },
+  ],
+};
 
 export const setup = (gl, canvas) => {
   gl.enable(gl.DEPTH_TEST);
@@ -97,12 +110,33 @@ export class WebGL {
     setup(this.gl, this.canvas);
   }
 
-  async init(vertex_file, shader_file, materials) {
+  async init(vertex_file, shader_file, materials, lights) {
     this.glProgram = await initShaders(this.gl, vertex_file, shader_file);
     setupMatrices(this.gl, this.canvas, this.glProgram);
     this.clear();
     await this.initMaterials(this.gl, materials);
+    this.setLights(lights);
     return this;
+  }
+
+  setInt(name, value) {
+    const uniform = this.gl.getUniformLocation(this.glProgram, name);
+    this.gl.uniform1i(uniform, value);
+  }
+
+  setFloat(name, value) {
+    const loc = this.gl.getUniformLocation(this.glProgram, name);
+    this.gl.uniform1f(loc, value);
+  }
+
+  setVector(name, vector) {
+    const loc = this.gl.getUniformLocation(this.glProgram, name);
+    this.gl.uniform3fv(loc, vector);
+  }
+
+  setVectorArray(name, array) {
+    const loc = this.gl.getUniformLocation(this.glProgram, name);
+    this.gl.uniform3fv(loc, expandVecVec(array));
   }
 
   setMatrix(name, matrix) {
@@ -132,18 +166,18 @@ export class WebGL {
 
   _setMaterial(name = "default") {
     const gl = this.gl;
-    /* FIXME
-    const textureUniform = this.gl.getUniformLocation(this.glProgram, "texture");
-    this.gl.uniform1i(textureUniform, this.textures[name]);
-    */
 
     if (this._current_material == name) return;
 
     const material =
       this.materials.find((t) => t.name === name) || this.materials[0];
-    const tex = material.texture;
 
-    gl.bindTexture(gl.TEXTURE_2D, tex);
+    this.setVector("ambient", material.ambient);
+    this.setFloat("diffuseFactor", material.diffuse);
+    gl.bindTexture(gl.TEXTURE_2D, material.texture); // TODO: is there a better way to switch between textures?
+    this.setVector("specular", material.specular);
+    this.setFloat("gloss", material.gloss);
+
     this._current_material = name;
   }
   setMaterial(name) {
@@ -177,7 +211,21 @@ export class WebGL {
       gl.generateMipmap(gl.TEXTURE_2D);
     });
 
-    this._setMaterial();
+    this.setMaterial();
+  }
+
+  setLights(lights = defaultLights) {
+    this.setVector("directionalLightDir", lights.directional.dir);
+    this.setVector("directionalLightColor", lights.directional.color);
+
+    this.setVectorArray(
+      "pointLightPos",
+      lights.points.map((p) => p.pos)
+    );
+    this.setVectorArray(
+      "pointLightColor",
+      lights.points.map((p) => p.color)
+    );
   }
 
   setUseTexture(bool) {

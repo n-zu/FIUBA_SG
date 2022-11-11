@@ -16,6 +16,12 @@
 
 ## TPs
 
-
 - [TP1](https://n-zu.github.io/FIUBA_SG/tp/tp1/)
 - [TP1 - Demos](https://n-zu.github.io/FIUBA_SG/tp/tp1/demo/)
+
+## Recursos
+
+- [Wgl textures](https://webglfundamentals.org/webgl/lessons/webgl-3d-textures.html)
+- [Wgl point light](https://webglfundamentals.org/webgl/lessons/webgl-3d-lighting-point.html)
+- [Blinn-Phong shading](https://www.geertarien.com/blog/2017/08/30/blinn-phong-shading-using-webgl)
+- [Blinn-Phong demo](http://www.cs.toronto.edu/~jacobson/phong-demo/)

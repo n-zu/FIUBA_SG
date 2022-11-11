@@ -1,10 +1,13 @@
 import { WebGL } from "../scripts/webgl.js";
 import { Mesh } from "../scripts/mesh.js";
-import { updateCamera } from "./camera.js";
+import { updateCamera } from "./common/camera.js";
 
 import { Terrain, Walls, Castle, Catapult } from "./components/index.js";
-import { update as update_anim, animation_meshes } from "./animation.js";
-import materials from "./common/materials.js";
+import {
+  update as update_anim,
+  animation_meshes,
+} from "./environment/animation.js";
+import materials from "./environment/materials.js";
 
 const wgl = await new WebGL("#main").init(
   "./shaders/vertex.glsl",
