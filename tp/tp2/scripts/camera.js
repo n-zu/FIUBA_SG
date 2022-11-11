@@ -99,7 +99,7 @@ class DroneCamera {
   }
 
   update(wgl) {
-    wgl?.setViewMatrix(this.getViewMatrix());
+    wgl?.setCamera(this.position, this.getViewMatrix());
 
     const { state, rotation, position } = this;
 
@@ -264,7 +264,7 @@ class FreeCamera {
   update(wgl) {
     this.updateDirection();
     this.updatePosition();
-    wgl?.setViewMatrix(this.getViewMatrix());
+    wgl?.setCamera(this.position, this.getViewMatrix());
   }
 
   getViewMatrix() {
@@ -381,7 +381,7 @@ class OrbitalCamera {
 
   update(wgl) {
     this.updatePosition();
-    wgl?.setViewMatrix(this.getViewMatrix());
+    wgl?.setCamera(this.position, this.getViewMatrix());
   }
 
   getViewMatrix() {

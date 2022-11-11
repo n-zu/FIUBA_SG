@@ -6,7 +6,7 @@ const materialTemplate = {
   diffuse: 1,
   src: "assets/textures/proto.png",
   specular: v3(0.5),
-  gloss: 0.5,
+  gloss: 3,
 };
 
 const materials = [
@@ -39,6 +39,8 @@ const materials = [
     ...materialTemplate,
     name: "water",
     src: "assets/textures/water/diffuse.jpg",
+    specular: v3(2),
+    gloss: 60,
   },
   {
     ...materialTemplate,
@@ -49,11 +51,16 @@ const materials = [
     ...materialTemplate,
     name: "window",
     src: "assets/textures/window/diffuse.jpg",
+    specular: v3(2),
+    gloss: 20,
   },
   {
     ...materialTemplate,
     name: "roof",
     src: "assets/textures/roof/diffuse2.png",
+    specular: v3(1),
+    gloss: 30,
+    diffuse: 1.5,
   },
   {
     ...materialTemplate,

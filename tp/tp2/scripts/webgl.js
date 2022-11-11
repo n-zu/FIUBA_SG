@@ -15,8 +15,8 @@ const defaultLights = {
   },
   points: [
     {
-      pos: [0, 50, 10],
-      color: [20, 20, 20],
+      pos: [0, 0, 0],
+      color: [1, 1, 1],
     },
   ],
 };
@@ -144,7 +144,8 @@ export class WebGL {
     this.gl.uniformMatrix4fv(matrixUniform, false, matrix);
   }
 
-  setViewMatrix(viewMatrix) {
+  setCamera(position, viewMatrix) {
+    this.setVector("cameraPosition", position);
     this.setMatrix("viewMatrix", viewMatrix);
     return this;
   }
