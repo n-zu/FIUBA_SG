@@ -3,15 +3,13 @@ import { mat4 } from "./util.js";
 class Mesh {
   name = "3D Object";
   geometry = null;
-  color = [1.0, 0, 1.0];
   transform = mat4.create();
   children = [];
 
   constructor(attributes, transformations, children) {
     if (attributes?.[0]) this.name = attributes?.[0];
     if (attributes?.[1]) this.geometry = attributes?.[1];
-    if (attributes?.[2] && !Array.isArray(attributes?.[2]))
-      this.texture = attributes?.[2];
+    if (attributes?.[2]) this.material = attributes?.[2];
 
     transformations?.[0] &&
       transformations.reverse().forEach(({ pos, rot, scale }) => {
@@ -28,7 +26,7 @@ class Mesh {
 
     if (this.geometry) {
       wgl.setModelMatrix(transform);
-      wgl.setTexture(this.texture);
+      wgl.setMaterial(this.material);
       this.geometry.draw(wgl);
     }
 

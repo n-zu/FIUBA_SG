@@ -1,7 +1,7 @@
 import { loadImage, mat4, mx } from "./util.js";
 import { default_vertex, default_fragment } from "../shaders/index.js";
 
-const defaultTextures = [
+const defaultMaterials = [
   {
     name: "default",
     src: "https://raw.githubusercontent.com/gsimone/gridbox-prototype-materials/main/prototype_512x512_grey1.png",
@@ -97,11 +97,11 @@ export class WebGL {
     setup(this.gl, this.canvas);
   }
 
-  async init(vertex_file, shader_file, textures) {
+  async init(vertex_file, shader_file, materials) {
     this.glProgram = await initShaders(this.gl, vertex_file, shader_file);
     setupMatrices(this.gl, this.canvas, this.glProgram);
     this.clear();
-    await this.initTextures(this.gl, textures);
+    await this.initMaterials(this.gl, materials);
     return this;
   }
 
@@ -130,54 +130,54 @@ export class WebGL {
     return this;
   }
 
-  _setTexture(name = "default") {
+  _setMaterial(name = "default") {
     const gl = this.gl;
     /* FIXME
     const textureUniform = this.gl.getUniformLocation(this.glProgram, "texture");
     this.gl.uniform1i(textureUniform, this.textures[name]);
     */
 
-    if (this._current_texture == name) return;
+    if (this._current_material == name) return;
 
-    const texture =
-      this.textures.find((t) => t.name === name) || this.textures[0];
-    const tex = texture.texture;
+    const material =
+      this.materials.find((t) => t.name === name) || this.materials[0];
+    const tex = material.texture;
 
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    this._current_texture = name;
+    this._current_material = name;
   }
-  setTexture(name) {
-    this.current_texture = name;
-    this._setTexture(name);
+  setMaterial(name) {
+    this.current_material = name;
+    this._setMaterial(name);
   }
 
-  async initTextures(gl, textures = defaultTextures) {
-    this.textures = await Promise.all(
-      textures.map(async (texture) => {
-        const image = await loadImage(texture.src);
+  async initMaterials(gl, materials = defaultMaterials) {
+    this.materials = await Promise.all(
+      materials.map(async (material) => {
+        const image = await loadImage(material.src);
         const tex = gl.createTexture();
         return {
-          ...texture,
+          ...material,
           image,
           texture: tex,
         };
       })
     );
 
-    this.textures.forEach((texture) => {
-      gl.bindTexture(gl.TEXTURE_2D, texture.texture);
+    this.materials.forEach((material) => {
+      gl.bindTexture(gl.TEXTURE_2D, material.texture);
       gl.texImage2D(
         gl.TEXTURE_2D,
         0,
         gl.RGBA,
         gl.RGBA,
         gl.UNSIGNED_BYTE,
-        texture.image
+        material.image
       );
       gl.generateMipmap(gl.TEXTURE_2D);
     });
 
-    this._setTexture();
+    this._setMaterial();
   }
 
   setUseTexture(bool) {
@@ -251,9 +251,9 @@ export class WebGL {
     if (this.drawSurfaces) gl.drawElements(mode, nvp, gl.UNSIGNED_SHORT, 0);
 
     if (this.drawLines) {
-      this._setTexture("window");
+      this._setMaterial("window");
       gl.drawElements(this.gl.LINE_STRIP, nvp, gl.UNSIGNED_SHORT, 0);
-      this._setTexture(this.current_texture);
+      this._setMaterial(this.current_material);
     }
   };
 

@@ -4,11 +4,12 @@ import { updateCamera } from "./camera.js";
 
 import { Terrain, Walls, Castle, Catapult } from "./components/index.js";
 import { update as update_anim, animation_meshes } from "./animation.js";
+import materials from "./common/materials.js";
 
 const wgl = await new WebGL("#main").init(
   "./shaders/vertex.glsl",
   "./shaders/fragment.glsl",
-  settings.textures
+  materials
 );
 wgl
   .setUseTexture(!settings.normals)
