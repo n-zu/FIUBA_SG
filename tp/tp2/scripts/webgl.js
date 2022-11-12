@@ -129,6 +129,11 @@ export class WebGL {
     this.gl.uniform1f(loc, value);
   }
 
+  setFloatArray(name, array) {
+    const loc = this.gl.getUniformLocation(this.glProgram, name);
+    this.gl.uniform1fv(loc, array);
+  }
+
   setVector(name, vector) {
     const loc = this.gl.getUniformLocation(this.glProgram, name);
     this.gl.uniform3fv(loc, vector);
@@ -178,6 +183,8 @@ export class WebGL {
     gl.bindTexture(gl.TEXTURE_2D, material.texture); // TODO: is there a better way to switch between textures?
     this.setVector("specular", material.specular);
     this.setFloat("gloss", material.gloss);
+    this.setFloatArray("texScale", material.texScale);
+    this.setFloatArray("texWeight", material.texWeight);
 
     this._current_material = name;
   }

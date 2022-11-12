@@ -7,6 +7,8 @@ const materialTemplate = {
   src: "assets/textures/proto.png",
   specular: v3(0.5),
   gloss: 3,
+  texScale: [0.64, 0.17],
+  texWeight: [0.4, 0.2],
 };
 
 const materials = [
@@ -82,6 +84,8 @@ const materials = [
     src: "assets/sky.jpg",
     ambient: [0.5, 0.5, 0.6],
     diffuse: 0,
+    texScale: [5, 11],
+    texWeight: [0.5, 0.3],
   },
 ];
 

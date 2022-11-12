@@ -2,6 +2,9 @@ precision highp float;
 
 uniform bool useTexture;
 
+uniform float texScale[2];
+uniform float texWeight[2];
+
 uniform vec3 ambient;
 uniform float diffuseFactor;
 uniform sampler2D texture;
@@ -46,10 +49,10 @@ void main(void) {
     vec3 viewDir = normalize( cameraPosition - vPosWorld );
 
     vec3 tex1 = texture2D(texture, vUV*1.00).xyz;
-    vec3 tex2 = texture2D(texture, vUV*0.64).xyz;
-    vec3 tex3 = texture2D(texture, vUV*0.17).xyz;
-    vec3 tex4 = mix(tex1, tex2, 0.3);
-    vec3 tex5 = mix(tex4, tex3, 0.3) ;
+    vec3 tex2 = texture2D(texture, vUV*texScale[0]).xyz;
+    vec3 tex3 = texture2D(texture, vUV*texScale[1]).xyz;
+    vec3 tex4 = mix(tex1, tex2, texWeight[0]);
+    vec3 tex5 = mix(tex4, tex3, texWeight[1]) ;
 
 
     vec3 ambientColor = tex5 * ambient;
