@@ -114,7 +114,7 @@ export class WebGL {
     this.glProgram = await initShaders(this.gl, vertex_file, shader_file);
     setupMatrices(this.gl, this.canvas, this.glProgram);
     this.clear();
-    await this.initMaterials(this.gl, materials);
+    this.initMaterials(this.gl, materials);
     this.setLights(lights);
     return this;
   }
@@ -186,31 +186,34 @@ export class WebGL {
     this._setMaterial(name);
   }
 
-  async initMaterials(gl, materials = defaultMaterials) {
-    this.materials = await Promise.all(
-      materials.map(async (material) => {
-        const image = await loadImage(material.src);
-        const tex = gl.createTexture();
-        return {
-          ...material,
-          image,
-          texture: tex,
-        };
-      })
+  async loadTexture(gl, material) {
+    const image = await loadImage(material.src);
+    gl.bindTexture(gl.TEXTURE_2D, material.texture);
+    gl.texImage2D(
+      ...[gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA],
+      gl.UNSIGNED_BYTE,
+      image
     );
+    gl.generateMipmap(gl.TEXTURE_2D);
+  }
 
-    this.materials.forEach((material) => {
-      gl.bindTexture(gl.TEXTURE_2D, material.texture);
+  initMaterials(gl, materials = defaultMaterials) {
+    this.materials = materials.map((material) => {
+      const texture = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA,
-        gl.RGBA,
+        ...[gl.TEXTURE_2D, 0, gl.RGBA],
+        ...[1, 1, 0, gl.RGBA],
         gl.UNSIGNED_BYTE,
-        material.image
+        new Uint8Array([255, 255, 255, 255])
       );
-      gl.generateMipmap(gl.TEXTURE_2D);
+      return {
+        ...material,
+        texture,
+      };
     });
+
+    this.materials.forEach((material) => this.loadTexture(gl, material));
 
     this.setMaterial();
   }
