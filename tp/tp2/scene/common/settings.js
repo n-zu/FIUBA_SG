@@ -32,6 +32,7 @@ var settings = {
     tower_tip: "roof",
     ammo: "fire",
     lamp: "fire",
+    sky: "sky",
   },
 
   lightColor: {

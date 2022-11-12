@@ -187,6 +187,7 @@ export class WebGL {
   }
 
   async loadTexture(gl, material) {
+    if (!material.src || !material.texture) return;
     const image = await loadImage(material.src);
     gl.bindTexture(gl.TEXTURE_2D, material.texture);
     gl.texImage2D(

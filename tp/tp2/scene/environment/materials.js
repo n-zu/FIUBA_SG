@@ -76,6 +76,13 @@ const materials = [
     specular: [3, 0, 0],
     gloss: 6,
   },
+  {
+    ...materialTemplate,
+    name: "sky",
+    src: "assets/sky.jpg",
+    ambient: [0.5, 0.5, 0.6],
+    diffuse: 0,
+  },
 ];
 
 export default materials;

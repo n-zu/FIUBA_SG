@@ -3,6 +3,7 @@ import {
   Spline,
   Surface,
   Cube,
+  Sphere,
   Revolution,
   SweepSolid,
 } from "../../scripts/geometry.js";
@@ -81,6 +82,8 @@ const getWater = (t) =>
     ]
   );
 
+const getSky = (t) => new Mesh(["sky", glob_geometry.sky, color.sky]);
+
 let initiated = false;
 const initiate = (wgl) => {
   if (initiated) return;
@@ -103,6 +106,8 @@ const initiate = (wgl) => {
     ]
   );
   glob_geometry.floor = new Mesh(["floor", getFloorGeometry(wgl), color.grass]);
+
+  glob_geometry.sky = new Sphere(50).setupBuffers(wgl);
 };
 
 const Terrain = (wgl, t) => {
@@ -110,8 +115,15 @@ const Terrain = (wgl, t) => {
 
   const { center, bridge, floor } = glob_geometry;
   const water = getWater(t);
+  const sky = getSky(t);
 
-  const terrain = new Mesh(["Terrain"], null, [center, bridge, floor, water]);
+  const terrain = new Mesh(["Terrain"], null, [
+    center,
+    bridge,
+    floor,
+    water,
+    sky,
+  ]);
 
   return terrain;
 };
