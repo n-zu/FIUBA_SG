@@ -11,9 +11,13 @@ uniform float gloss;
 uniform vec3 directionalLightDir;// reversed
 uniform vec3 directionalLightColor;
 
-const int MAX_POINT_LIGHTS = 4;
+const int MAX_POINT_LIGHTS = 10;
+uniform int numPointLights;
 uniform vec3 pointLightPos[MAX_POINT_LIGHTS];
 uniform vec3 pointLightColor[MAX_POINT_LIGHTS];
+
+const float linealDecay = 1.0;
+const float quadraticDecay = 0.5;
 
 uniform vec3 cameraPosition;
 
@@ -21,6 +25,18 @@ varying vec3 vNormal;
 varying vec3 vPosWorld;
 varying vec2 vUV;
 
+float lambert( vec3 normal, vec3 lightDir ){
+    return max( dot( normal, lightDir ), 0.0 );
+}
+
+float specularFactor( vec3 normal, vec3 lightDir, vec3 viewDir ){
+    vec3 halfDir = normalize( lightDir + viewDir );
+    return pow( max( dot( normal, halfDir ), 0.0 ), gloss );
+}
+
+float decay( float dist ){
+    return 1.0/( dist * linealDecay + dist * dist * quadraticDecay );
+}
 
 void main(void) {
 
@@ -42,24 +58,22 @@ void main(void) {
 
     {
       vec3 lightDir = normalize(directionalLightDir);
-      float lambert = max(dot(vNormal, lightDir), 0.0);
+      float lambert = lambert( vNormal, lightDir );
       diffuseColor += lambert * directionalLightColor;
       
-      vec3 halfDir = normalize(lightDir + viewDir);
-      float specularFactor = pow(max(dot(vNormal, halfDir), 0.0), gloss);
+      float specularFactor = specularFactor( vNormal, lightDir, viewDir );
       specularColor += specularFactor * directionalLightColor;
     }
 
     for ( int i = 0; i < MAX_POINT_LIGHTS; i++ ) {
-      vec3 _lightDir = pointLightPos[i] - vPosWorld;
-      float lightDist = length(_lightDir);
-      vec3 lightDir = normalize(_lightDir);
-      float lambert = max(dot(vNormal, lightDir), 0.0);
-      diffuseColor += pointLightColor[i] * lambert / lightDist;
+      if ( i >= numPointLights ) break;
+      vec3 lightDir = pointLightPos[i] - vPosWorld;
+      float decay = decay( length( lightDir ) );
+      float lambert = lambert( vNormal,  normalize(lightDir) );
+      diffuseColor += pointLightColor[i] * lambert * decay;
 
-      vec3 halfDir = normalize(lightDir + viewDir);
-      float specularFactor = pow(max(dot(vNormal, halfDir), 0.0), gloss);
-      specularColor += specularFactor * pointLightColor[i] / lightDist;
+      float specularFactor = specularFactor( vNormal, normalize(lightDir), viewDir );
+      specularColor += specularFactor * pointLightColor[i] * decay;
     }
 
     diffuseColor *= tex5 * diffuseFactor;

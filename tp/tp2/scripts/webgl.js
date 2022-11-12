@@ -219,6 +219,7 @@ export class WebGL {
     this.setVector("directionalLightDir", lights.directional.dir);
     this.setVector("directionalLightColor", lights.directional.color);
 
+    this.setInt("numPointLights", lights.points.length);
     this.setVectorArray(
       "pointLightPos",
       lights.points.map((p) => p.pos)
