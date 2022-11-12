@@ -49,8 +49,13 @@ canvas {
 }
 
 .controls {
-  padding: 0.5em 1em;
+  padding: 0.5em 10%;
   line-height: 2em;
+  display: flex;
+  gap: 1em 5em;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 .controls h3 {
