@@ -31,10 +31,12 @@ var settings = {
     window: "window",
     tower_tip: "roof",
     ammo: "fire",
+    lamp: "fire",
   },
 
   lightColor: {
     sun: [0.26, 0.23, 0.2],
     fire: [0.5, 0.4, 0.3],
+    lamp: [0.5, 0.4, 0.3],
   },
 };

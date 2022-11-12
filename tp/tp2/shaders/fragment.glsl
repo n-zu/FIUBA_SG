@@ -11,7 +11,7 @@ uniform float gloss;
 uniform vec3 directionalLightDir;// reversed
 uniform vec3 directionalLightColor;
 
-const int MAX_POINT_LIGHTS = 10;
+const int MAX_POINT_LIGHTS = 15; // max towers (12) + max ammo (~3)
 uniform int numPointLights;
 uniform vec3 pointLightPos[MAX_POINT_LIGHTS];
 uniform vec3 pointLightColor[MAX_POINT_LIGHTS];

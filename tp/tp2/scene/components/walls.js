@@ -3,12 +3,14 @@ import {
   Spline,
   Surface,
   Cube,
+  Cylinder,
   Revolution,
   SweepSolid,
 } from "../../scripts/geometry.js";
 import { mx } from "../../scripts/util.js";
 
 const color = settings.color;
+const lampLight = settings.lightColor.lamp;
 var glob_geometry = {};
 const texScale = 0.5;
 
@@ -207,6 +209,7 @@ const getWallMesh = (wgl, points, height) => {
 const getWall = (wgl, points, height) => {
   return glob_geometry.wallsMesh;
 };
+
 const getGate = (wgl, points, height, angle = 15) => {
   const gate_frame_geometry = glob_geometry.gate_frame;
   const gate_geometry = glob_geometry.gate_door;
@@ -265,6 +268,50 @@ const getGate = (wgl, points, height, angle = 15) => {
   return gate;
 };
 
+const getLightMesh = (wgl) => {
+  const rod = new Cylinder(0.02).setupBuffers(wgl);
+  const light = new Cube(0.2).setupBuffers(wgl);
+
+  return new Mesh(["Lamp"], null, [
+    new Mesh(
+      ["Base Rod", rod, color.wood],
+      [Transform.translate([0, 0.5, -1])]
+    ),
+    new Mesh(
+      ["Hold Rod", rod, color.wood],
+      [
+        Transform.scale([0.9, 0.9, 0.6]),
+        Transform.rotate([Math.PI / 2, [1, 0, 0]]),
+        Transform.translate([0, 0.3, -1.3]),
+      ]
+    ),
+    new Mesh(
+      ["Light", light, color.lamp, lampLight],
+      [Transform.scale([1, 1.62, 1]), Transform.translate([0, 0.2, -1.3])]
+    ),
+  ]);
+};
+
+const getLights = (number = 6, radius = _radius, height = 1) => {
+  const lights = [];
+  const r = radius * Math.cos(Math.PI / number) + 0.4;
+  const angle = (n) => ((n + 0) * (2 * Math.PI)) / number;
+
+  for (let i = 1; i < number; i++) {
+    const light = new Mesh(
+      ["Light"],
+      [
+        Transform.translate([0, height, r]),
+        Transform.rotate([angle(i), [0, 1, 0]]),
+      ],
+      [glob_geometry.light]
+    );
+    lights.push(light);
+  }
+
+  return new Mesh(["Lights"], null, lights);
+};
+
 const initiate = (wgl, number, height, angle) => {
   const h_dif = Math.abs(height - glob_geometry.height ?? 0);
   const a_dif = Math.abs(angle - glob_geometry.angle ?? 0);
@@ -276,8 +323,7 @@ const initiate = (wgl, number, height, angle) => {
   if (
     glob_geometry.initiated &&
     number == glob_geometry.points.length &&
-    h_dif < 0.01 &&
-    a_dif < 0.01
+    h_dif < 0.01
   ) {
     if (a_dif >= 0.01) {
       glob_geometry.angle = angle;
@@ -310,6 +356,9 @@ const initiate = (wgl, number, height, angle) => {
     [5 * texScale * height, 70 * texScale],
     [1, 0.1]
   );
+
+  glob_geometry.light = getLightMesh(wgl);
+
   glob_geometry.initiated = true;
 
   return true;
@@ -322,8 +371,9 @@ const Walls = (wgl, number = 6, height = 1.5, angle = 0) => {
   const towers = getTowers(wgl, glob_geometry.points, height);
   const wall = getWall(wgl, glob_geometry.points, height);
   const gate = getGate(wgl, glob_geometry.points, height, angle);
+  const lights = getLights(number, undefined, height * 0.5);
 
-  const walls = new Mesh(["Walls"], null, [towers, wall, gate]);
+  const walls = new Mesh(["Walls"], null, [towers, wall, gate, lights]);
   cache = walls;
 
   return walls;
