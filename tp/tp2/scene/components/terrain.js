@@ -86,7 +86,12 @@ const getWater = (t) =>
 const getSky = (t) =>
   new Mesh(
     ["sky", glob_geometry.sky, color.sky, sunlight],
-    [Transform.translate([0, 10, 20]), Transform.rotate([t / 5, [0, 1, 0]])]
+    [
+      Transform.rotate([-t / 3, [0, 1, 0]]),
+      Transform.translate([0, 10, 20]),
+      Transform.rotate([t / 5, [0, 1, 0]]),
+    ]
+    //[new Mesh(["moon", glob_geometry.sky, color.sky, sunlight],[Transform.scale([1 / 50, 1 / 50, 1 / 50])]),]
   );
 
 let initiated = false;
