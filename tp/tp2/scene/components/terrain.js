@@ -10,6 +10,7 @@ import {
 
 const depth = -4;
 const color = settings.color;
+const sunlight = settings.light.sun.name;
 var glob_geometry = {};
 
 const getCenterSurface = () => {
@@ -82,7 +83,11 @@ const getWater = (t) =>
     ]
   );
 
-const getSky = (t) => new Mesh(["sky", glob_geometry.sky, color.sky]);
+const getSky = (t) =>
+  new Mesh(
+    ["sky", glob_geometry.sky, color.sky, sunlight],
+    [Transform.translate([0, 10, 20]), Transform.rotate([t / 5, [0, 1, 0]])]
+  );
 
 let initiated = false;
 const initiate = (wgl) => {
@@ -107,7 +112,7 @@ const initiate = (wgl) => {
   );
   glob_geometry.floor = new Mesh(["floor", getFloorGeometry(wgl), color.grass]);
 
-  glob_geometry.sky = new Sphere(50).setupBuffers(wgl);
+  glob_geometry.sky = new Sphere(55).setupBuffers(wgl);
 };
 
 const Terrain = (wgl, t) => {

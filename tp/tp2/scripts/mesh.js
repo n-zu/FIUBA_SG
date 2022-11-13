@@ -12,6 +12,7 @@ class Mesh {
     if (attributes?.[1]) this.geometry = attributes?.[1];
     if (attributes?.[2]) this.material = attributes?.[2];
     if (attributes?.[3]) this.lightColor = attributes?.[3];
+    if (attributes?.[4]) this.emissiveStr = attributes?.[4];
 
     transformations?.[0] &&
       transformations.reverse().forEach(({ pos, rot, scale }) => {
@@ -28,7 +29,7 @@ class Mesh {
 
     if (this.geometry) {
       wgl.setModelMatrix(transform);
-      wgl.setMaterial(this.material);
+      wgl.setMaterial(this.material, this.lightColor, this.emissiveStr ?? 1.5);
       this.geometry.draw(wgl);
     }
 

@@ -35,9 +35,18 @@ var settings = {
     sky: "sky",
   },
 
-  lightColor: {
-    sun: [0.26, 0.23, 0.2],
-    fire: [0.5, 0.4, 0.3],
-    lamp: [0.5, 0.4, 0.3],
+  light: {
+    sun: {
+      name: "sun",
+      color: [0.39, 0.37, 0.35],
+    },
+    fire: {
+      name: "fire",
+      color: [0.46, 0.21, 0.11],
+    },
+    lamp: {
+      name: "lamp",
+      color: [0.5, 0.4, 0.3],
+    },
   },
 };

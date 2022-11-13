@@ -34,3 +34,34 @@ catapult.add(settings, "catapult_offset", -200, 200, 1).name("Offset");
 catapult.add(settings, "catapult_rotation", -30, 30, 1).name("Rotation");
 catapult.add(settings, "catapult_str", 1, 5, 1).name("Strength");
 catapult.add(settings, "catapult_shoot").name("Shoot");
+
+// Light
+const light = gui.addFolder("Light");
+
+const vecToHex = (v) => {
+  const r = Math.floor(v[0] * 255);
+  const g = Math.floor(v[1] * 255);
+  const b = Math.floor(v[2] * 255);
+
+  return (r << 16) + (g << 8) + b;
+};
+const hexToVec = (h) => {
+  const r = (h >> 16) & 0xff;
+  const g = (h >> 8) & 0xff;
+  const b = h & 0xff;
+
+  return [r / 255, g / 255, b / 255];
+};
+
+const lights = {
+  sun: vecToHex(settings.light.sun.color),
+  fire: vecToHex(settings.light.fire.color),
+  lamp: vecToHex(settings.light.lamp.color),
+};
+const updateLight = (name) => (color) => {
+  settings.light[name].color = hexToVec(color);
+};
+
+light.addColor(lights, "sun").name("Sun").onChange(updateLight("sun"));
+light.addColor(lights, "fire").name("Fire").onChange(updateLight("fire"));
+light.addColor(lights, "lamp").name("Lamp").onChange(updateLight("lamp"));

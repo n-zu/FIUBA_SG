@@ -3,7 +3,7 @@ import { Mesh } from "../../scripts/mesh.js";
 import { Sphere } from "../../scripts/geometry.js";
 
 const color = settings.color;
-const fireLight = settings.lightColor.fire;
+const fireLight = settings.light.fire.name;
 
 let animation_meshes = [];
 let animation_meshes_queue = [];

@@ -10,7 +10,7 @@ import {
 import { mx } from "../../scripts/util.js";
 
 const color = settings.color;
-const lampLight = settings.lightColor.lamp;
+const lampLight = settings.light.lamp.name;
 var glob_geometry = {};
 const texScale = 0.5;
 

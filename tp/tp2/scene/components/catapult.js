@@ -10,7 +10,7 @@ import {
 } from "../../scripts/geometry.js";
 
 const color = settings.color;
-const fireLight = settings.lightColor.fire;
+const fireLight = settings.light.fire.name;
 var glob_geometry = {};
 
 const rad = (deg) => (deg * Math.PI) / 180;

@@ -19,6 +19,9 @@ wgl
   .setDrawLines(settings.lines)
   .setDrawSurfaces(true);
 
+wgl.gl.depthRange(0, 3);
+wgl.lightColors = settings.light;
+
 settings.wgl = wgl;
 
 const getTerrain = (t) => Terrain(wgl, t);
@@ -57,7 +60,7 @@ const setLights = (lights) => {
   wgl.setLights({
     directional: {
       dir: [1, 1, 1],
-      color: settings.lightColor.sun,
+      color: settings.light.sun.name,
     },
     points: lights,
   });

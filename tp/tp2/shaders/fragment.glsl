@@ -10,6 +10,7 @@ uniform float diffuseFactor;
 uniform sampler2D texture;
 uniform vec3 specular;
 uniform float gloss;
+uniform vec3 emissive;
 
 uniform vec3 directionalLightDir;// reversed
 uniform vec3 directionalLightColor;
@@ -39,6 +40,10 @@ float specularFactor( vec3 normal, vec3 lightDir, vec3 viewDir ){
 
 float decay( float dist ){
     return 1.0/( dist * linealDecay + dist * dist * quadraticDecay );
+}
+
+float emissiveFactor( vec3 normal, vec3 viewDir ){
+    return max( dot( normal, viewDir ), 0.0 ) +0.5;
 }
 
 void main(void) {
@@ -82,7 +87,9 @@ void main(void) {
     diffuseColor *= tex5 * diffuseFactor;
     specularColor *= specular;
 
-    vec3 color = ambientColor + diffuseColor + specularColor;
+    vec3 emissiveColor = emissive * emissiveFactor( vNormal, viewDir );
+
+    vec3 color = ambientColor + diffuseColor + specularColor + emissiveColor;
 
     gl_FragColor = vec4(color, 1.0);
 

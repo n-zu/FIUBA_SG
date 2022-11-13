@@ -34,7 +34,7 @@ export const setupMatrices = (gl, canvas, glProgram) => {
   let projMatrix = mx.mat();
   let normalMatrix = mx.mat();
 
-  mat4.perspective(projMatrix, 45, canvas.width / canvas.height, 0.1, 100.0);
+  mat4.perspective(projMatrix, 45, canvas.width / canvas.height, 0.1, 200.0);
 
   const modelMatrixUniform = gl.getUniformLocation(glProgram, "modelMatrix");
   const viewMatrixUniform = gl.getUniformLocation(glProgram, "viewMatrix");
@@ -170,7 +170,7 @@ export class WebGL {
     return this;
   }
 
-  _setMaterial(name = "default") {
+  _setMaterial(name = "default", light = "default", lightStr = 1) {
     const gl = this.gl;
 
     if (this._current_material == name) return;
@@ -185,12 +185,13 @@ export class WebGL {
     this.setFloat("gloss", material.gloss);
     this.setFloatArray("texScale", material.texScale);
     this.setFloatArray("texWeight", material.texWeight);
+    this.setVector("emissive", this.getLightColorStr(light, lightStr));
 
     this._current_material = name;
   }
-  setMaterial(name) {
+  setMaterial(name, light, lightStr) {
     this.current_material = name;
-    this._setMaterial(name);
+    this._setMaterial(name, light, lightStr);
   }
 
   async loadTexture(gl, material) {
@@ -226,9 +227,26 @@ export class WebGL {
     this.setMaterial();
   }
 
+  getLightColor(nameOrVec) {
+    if (typeof nameOrVec === "string") {
+      const light = this.lightColors?.[nameOrVec];
+      if (!light) return [0, 0, 0];
+      return light.color;
+    }
+
+    return nameOrVec;
+  }
+
+  getLightColorStr(nameOrVec, str = 1) {
+    const vec = this.getLightColor(nameOrVec);
+    return vec.map((v) => v * str);
+  }
+
   setLights(lights = defaultLights) {
+    const glc = this.getLightColor.bind(this);
+
     this.setVector("directionalLightDir", lights.directional.dir);
-    this.setVector("directionalLightColor", lights.directional.color);
+    this.setVector("directionalLightColor", glc(lights.directional.color));
 
     this.setInt("numPointLights", lights.points.length);
     this.setVectorArray(
@@ -237,7 +255,7 @@ export class WebGL {
     );
     this.setVectorArray(
       "pointLightColor",
-      lights.points.map((p) => p.color)
+      lights.points.map((p) => glc(p.color))
     );
   }
 
