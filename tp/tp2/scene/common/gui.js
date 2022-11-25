@@ -57,11 +57,16 @@ const lights = {
   sun: vecToHex(settings.light.sun.color),
   fire: vecToHex(settings.light.fire.color),
   lamp: vecToHex(settings.light.lamp.color),
+  ambient: vecToHex(settings.light.ambient.color),
 };
 const updateLight = (name) => (color) => {
   settings.light[name].color = hexToVec(color);
 };
 
+light
+  .addColor(lights, "ambient")
+  .name("Ambient")
+  .onChange(updateLight("ambient"));
 light.addColor(lights, "sun").name("Sun").onChange(updateLight("sun"));
 light.addColor(lights, "fire").name("Fire").onChange(updateLight("fire"));
 light.addColor(lights, "lamp").name("Lamp").onChange(updateLight("lamp"));

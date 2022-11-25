@@ -2,7 +2,6 @@ const v3 = (u) => [u, u, u];
 
 const materialTemplate = {
   name: "material",
-  ambient: v3(0.2),
   diffuse: 1,
   src: "assets/textures/proto.png",
   specular: v3(0.5),

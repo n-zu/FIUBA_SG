@@ -36,17 +36,9 @@ var settings = {
   },
 
   light: {
-    sun: {
-      name: "sun",
-      color: [0.39, 0.37, 0.35],
-    },
-    fire: {
-      name: "fire",
-      color: [0.46, 0.21, 0.11],
-    },
-    lamp: {
-      name: "lamp",
-      color: [0.5, 0.4, 0.3],
-    },
+    ambient: { name: "ambient", color: [0.2, 0.2, 0.25] },
+    sun: { name: "sun", color: [0.39, 0.37, 0.35] },
+    fire: { name: "fire", color: [0.46, 0.21, 0.11] },
+    lamp: { name: "lamp", color: [0.5, 0.4, 0.3] },
   },
 };

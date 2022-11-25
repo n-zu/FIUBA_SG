@@ -58,6 +58,7 @@ const getScene = (t) =>
 
 const setLights = (lights) => {
   wgl.setLights({
+    ambient: settings.light.ambient.name,
     directional: {
       dir: [1, 1, 1],
       color: settings.light.sun.name,

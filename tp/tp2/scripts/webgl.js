@@ -178,7 +178,6 @@ export class WebGL {
     const material =
       this.materials.find((t) => t.name === name) || this.materials[0];
 
-    this.setVector("ambient", material.ambient);
     this.setFloat("diffuseFactor", material.diffuse);
     gl.bindTexture(gl.TEXTURE_2D, material.texture); // TODO: is there a better way to switch between textures?
     this.setVector("specular", material.specular);
@@ -228,6 +227,7 @@ export class WebGL {
   }
 
   getLightColor(nameOrVec) {
+    if (!nameOrVec) return [0, 0, 0];
     if (typeof nameOrVec === "string") {
       const light = this.lightColors?.[nameOrVec];
       if (!light) return [0, 0, 0];
@@ -244,6 +244,8 @@ export class WebGL {
 
   setLights(lights = defaultLights) {
     const glc = this.getLightColor.bind(this);
+
+    this.setVector("ambient", glc(lights.ambient));
 
     this.setVector("directionalLightDir", lights.directional.dir);
     this.setVector("directionalLightColor", glc(lights.directional.color));
