@@ -20,6 +20,14 @@ const droneInitialState = {
   xRotVel: 0,
 };
 
+const getCanvas = (wgl) => {
+  const canvas = wgl?.canvas;
+  if (canvas) return canvas;
+  const doc_canvas = document.querySelector("canvas");
+  if (doc_canvas) return doc_canvas;
+  throw new Error("No canvas found");
+};
+
 class DroneCamera {
   constructor(initialPosition = [0, 0, 0]) {
     this.initialPosition = [...initialPosition];
@@ -159,6 +167,7 @@ class DroneCamera {
 
 class FreeCamera {
   constructor(wgl, initialPosition = [], initialDirection = [0, 0, -1]) {
+    this.canvas = getCanvas(wgl);
     this.position = [...initialPosition];
     this.initialPosition = [...initialPosition];
     this.direction = [...initialDirection];
@@ -177,7 +186,7 @@ class FreeCamera {
 
     this.setupListeners();
 
-    wgl.canvas.requestPointerLock();
+    this.canvas.requestPointerLock();
   }
   setupListeners() {
     this.keyDownListener = document.addEventListener("keydown", (e) => {
@@ -217,7 +226,7 @@ class FreeCamera {
       }
     });
 
-    this.mouseMoveListener = document.addEventListener("mousemove", (e) => {
+    this.mouseMoveListener = this.canvas.addEventListener("mousemove", (e) => {
       const { movementX, movementY } = e;
       const lerp_amt = 0.1;
       this.state.du = mx.lerp(this.state.du, movementX, lerp_amt);
@@ -275,17 +284,19 @@ class FreeCamera {
   cleanup() {
     document.removeEventListener("keydown", this.keyDownListener);
     document.removeEventListener("keyup", this.keyUpListener);
-    document.removeEventListener("mousemove", this.mouseMoveListener);
+    this.canvas.removeEventListener("mousemove", this.mouseMoveListener);
     document.exitPointerLock();
   }
 }
 
 class OrbitalCamera {
-  constructor(lookAt = [0, 0, 0], initialOffset = [0, 2, 15]) {
+  constructor(wgl, lookAt = [0, 0, 0], initialOffset = [0, 2, 15]) {
+    this.canvas = getCanvas(wgl);
     this.lookAt = lookAt;
     this.position = mx.add(lookAt, initialOffset);
     this.up = [0, 1, 0];
     this.side = [1, 0, 0];
+    this.dragging = false;
 
     this.state = {
       x: 0,
@@ -356,6 +367,31 @@ class OrbitalCamera {
           this.state.dz = 0;
       }
     });
+
+    // drag to rotate
+    this.mouseDownListener = this.canvas.addEventListener("mousedown", (e) => {
+      this.dragging = true;
+      this.canvas.requestPointerLock();
+    });
+
+    this.mouseUpListener = this.canvas.addEventListener("mouseup", (e) => {
+      this.dragging = false;
+      document.exitPointerLock();
+    });
+
+    this.mouseMoveListener = this.canvas.addEventListener("mousemove", (e) => {
+      if (!this.dragging) return;
+      const { movementX, movementY } = e;
+      const lerp_amt = 0.005;
+      this.state.u += movementX * lerp_amt;
+      this.state.v += movementY * lerp_amt;
+    });
+
+    // scroll to zoom
+    this.mouseWheelListener = this.canvas.addEventListener("wheel", (e) => {
+      const { deltaY } = e;
+      this.state.z += deltaY / 200;
+    });
   }
 
   updatePosition() {
@@ -391,6 +427,9 @@ class OrbitalCamera {
   cleanup() {
     document.removeEventListener("keydown", this.keyDownListener);
     document.removeEventListener("keyup", this.keyUpListener);
+    this.canvas.removeEventListener("mousedown", this.mouseDownListener);
+    this.canvas.removeEventListener("mouseup", this.mouseUpListener);
+    this.canvas.removeEventListener("mousemove", this.mouseMoveListener);
   }
 }
 

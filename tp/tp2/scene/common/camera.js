@@ -1,6 +1,6 @@
 import { FreeCamera, OrbitalCamera } from "../../scripts/camera.js";
 
-settings.camera = new OrbitalCamera();
+settings.camera = new OrbitalCamera(settings.wgl);
 setControlsClass("not_free");
 
 let _mode = settings.camera_mode;
@@ -15,11 +15,12 @@ const setCameraMode = (mode) => {
       setControlsClass("free");
       break;
     case "Center":
-      settings.camera = new OrbitalCamera();
+      settings.camera = new OrbitalCamera(settings.wgl);
       setControlsClass("not_free");
       break;
     case "Catapult":
       settings.camera = new OrbitalCamera(
+        settings.wgl,
         settings.getCatapultPosition(),
         [0, 1, 5]
       );

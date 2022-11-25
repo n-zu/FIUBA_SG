@@ -1,6 +1,9 @@
 html,
 body {
+  width: 100%;
   height: 100%;
+  overflow: hidden;
+  margin: 0;
 }
 
 html {
@@ -40,6 +43,7 @@ canvas {
 
   width: 80%;
   margin: 0 10%;
+  max-height: calc(100vh - 5rem);
 }
 
 .abs {
@@ -73,6 +77,12 @@ canvas {
 .controls > div > * {
   display: inline-block;
   margin-right: 0.5em;
+}
+
+.controls > div > div:has(span) {
+  padding-right: 0.4em;
+  margin-right: 0.4em;
+  border-right: 1.5px solid #0003;
 }
 
 .icon {
