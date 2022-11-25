@@ -32,16 +32,20 @@ export const setup3DBuffers = (
 ) => {
   const points = [];
   const normals = [];
+  const tangents = [];
+  const biNormals = [];
   const uv = [];
 
   for (let row = 0; row <= rows; row++) {
     for (let col = 0; col <= cols; col++) {
       const r = row / rows;
       const c = col / cols;
-      const { p, n, u, v } = obj.point(r, c);
+      const { p, n, u, v, t, b } = obj.point(r, c);
 
       points.push(...p);
       normals.push(...n);
+      tangents.push(...t);
+      biNormals.push(...b);
       if (invUv) uv.push(v * uvScale[1], u * uvScale[0]);
       else uv.push(u * uvScale[0], v * uvScale[1]);
     }
@@ -56,10 +60,19 @@ export const setup3DBuffers = (
 
   const pointsBuffer = wgl.createBuffer(points);
   const normalsBuffer = wgl.createBuffer(normals);
+  const tangentsBuffer = wgl.createBuffer(tangents);
+  const biNormalsBuffer = wgl.createBuffer(biNormals);
   const idxBuffer = wgl.createIndexBuffer(idx);
   const uvBuffer = wgl.createBuffer(uv);
 
-  obj.buffers = { pointsBuffer, normalsBuffer, idxBuffer, uvBuffer };
+  obj.buffers = {
+    pointsBuffer,
+    normalsBuffer,
+    idxBuffer,
+    uvBuffer,
+    tangentsBuffer,
+    biNormalsBuffer,
+  };
   obj.rows = rows;
   obj.cols = cols;
 };
@@ -450,11 +463,13 @@ class Surface {
     uvScale = [1, 1],
     plane = [0, 1]
   ) {
-    const { p: center, t: _t } = this.getOrientation();
-    const t = reverse ? mx.neg(_t) : _t;
+    const { p: center, t: _t, n: t, b } = this.getOrientation();
+    const n = reverse ? mx.neg(_t) : _t;
 
     let points = [...center];
-    let normals = [...t];
+    let normals = [...n];
+    let tangents = [...t];
+    let biNormals = [...b];
     let uv = [0, 0],
       _u = [],
       _v = [];
@@ -462,8 +477,9 @@ class Surface {
     for (let u = 0; u <= 1.001; u = u + delta) {
       const { p } = this.shape.point(u);
       points.push(...p);
-      normals.push(...t);
-      // Surface must be defined in 1: x,y, 2:x,z
+      normals.push(...n);
+      tangents.push(...t);
+      biNormals.push(...b);
       _u.push(p[plane[0]]);
       _v.push(p[plane[1]]);
     }
@@ -471,9 +487,8 @@ class Surface {
     const n_points = points.length / 3;
     const idx = arrayOf(n_points);
 
-    //FIXME: negative values
-    const max_u = Math.max(..._u);
-    const max_v = Math.max(..._v);
+    const max_u = Math.max(..._u, Math.abs(Math.min(..._u)));
+    const max_v = Math.max(..._v, Math.abs(Math.min(..._v)));
     for (let i = 0; i < n_points; i++) {
       const u = _u[i] / max_u;
       const v = _v[i] / max_v;
@@ -483,6 +498,8 @@ class Surface {
     return {
       pointsBuffer: wgl.createBuffer(points),
       normalsBuffer: wgl.createBuffer(normals),
+      tangentsBuffer: wgl.createBuffer(tangents),
+      biNormalsBuffer: wgl.createBuffer(biNormals),
       idxBuffer: wgl.createIndexBuffer(idx),
       uvBuffer: wgl.createBuffer(uv),
     };
@@ -663,16 +680,25 @@ class Cylinder {
     let n = mx.norm([1, 0, this.r[0] - this.r[1]]);
     mx.transform(n, rot);
 
-    return { p, n, u, v };
+    let t = [0, 1, 0];
+    mx.transform(t, rot);
+
+    const b = mx.cross(n, t);
+
+    return { p, n, u, v, t, b };
   }
 
   setupCoverBuffers(wgl, divisions = 50, uvScale = [1, 1]) {
     this.buffers.covers = [];
     [0, 1].forEach((v) => {
       const n = [0, 0, 2 * v - 1];
+      const t = [1, 0, 0];
+      const b = [0, 2 * v - 1, 0];
 
       let points = [...[0, 0, v - 0.5]];
       let normals = [...n];
+      let tangents = [...t];
+      let biNormals = [...b];
       let uv = [0.5, 0.5];
 
       for (let i = 0; i <= divisions; i++) {
@@ -681,6 +707,8 @@ class Cylinder {
 
         points.push(...p);
         normals.push(...n);
+        tangents.push(...t);
+        biNormals.push(...b);
         uv.push(
           (-Math.cos(u * Math.PI * 2) * uvScale[0] + 1) / 2, // u
           (Math.sin(u * Math.PI * 2) * uvScale[1] + 1) / 2 // v
@@ -690,6 +718,8 @@ class Cylinder {
 
       const pointsBuffer = wgl.createBuffer(points);
       const normalsBuffer = wgl.createBuffer(normals);
+      const tangentsBuffer = wgl.createBuffer(tangents);
+      const biNormalsBuffer = wgl.createBuffer(biNormals);
       const idxBuffer = wgl.createIndexBuffer(idx);
       const uvBuffer = wgl.createBuffer(uv);
 
@@ -697,6 +727,8 @@ class Cylinder {
         v,
         pointsBuffer,
         normalsBuffer,
+        tangentsBuffer,
+        biNormalsBuffer,
         idxBuffer,
         uvBuffer,
       });
@@ -730,15 +762,24 @@ class Sphere {
 
   point(u, v) {
     let mat = mx.mat();
+    let rot = mx.mat();
 
     mx.translate(mat, [this.radius, 0, 0]);
     mx.rotate(mat, Math.PI * (0.5 - v), [0, 0, 1]);
     mx.rotate(mat, 2 * Math.PI * u, [0, 1, 0]);
+    mx.rotate(rot, Math.PI * (0.5 - v), [0, 0, 1]);
+    mx.rotate(rot, 2 * Math.PI * u, [0, 1, 0]);
 
     const p = mx.vec();
     mx.transform(p, mat);
 
-    return { p, n: mx.norm(p), u, v };
+    const t = [0, 1, 0];
+    mx.transform(t, rot);
+
+    const b = [0, 0, 1];
+    mx.transform(b, rot);
+
+    return { p, n: mx.norm(p), u, v, t, b };
   }
 
   setupBuffers(wgl, rows = 50, cols = 50) {

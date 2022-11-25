@@ -2,6 +2,8 @@ precision highp float;
 
 attribute vec3 aVertexPosition;
 attribute vec3 aVertexNormal;
+attribute vec3 aVertexTangent;
+attribute vec3 aVertexBiNormal;
 attribute vec2 aVertexUV;
 
 uniform mat4 modelMatrix;
@@ -11,6 +13,8 @@ uniform mat4 normalMatrix;
 
 varying vec3 vPosWorld;
 varying vec3 vNormal;
+varying vec3 vTangent;
+varying vec3 vBiNormal;
 varying vec2 vUV;
 
 void main(void) {
@@ -18,5 +22,7 @@ void main(void) {
 
   vPosWorld=(modelMatrix*vec4(aVertexPosition,1.0)).xyz;
   vNormal=normalize((normalMatrix*vec4(aVertexNormal,1.0)).xyz);
+  vTangent=normalize((normalMatrix*vec4(aVertexTangent,1.0)).xyz);
+  vBiNormal=normalize((normalMatrix*vec4(aVertexBiNormal,1.0)).xyz);
   vUV=aVertexUV;
 }

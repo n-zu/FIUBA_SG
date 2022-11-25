@@ -170,21 +170,47 @@ export class WebGL {
     return this;
   }
 
-  _setMaterial(name = "default", light = "default", lightStr = 1) {
+  _setMaterialTextures(material) {
     const gl = this.gl;
 
-    if (this._current_material == name) return;
+    const { texture, normalMap } = material;
 
-    const material =
-      this.materials.find((t) => t.name === name) || this.materials[0];
+    if (!texture) return;
 
+    // Bind texture to texture unit 0
+
+    gl.uniform1i(gl.getUniformLocation(this.glProgram, "texture"), 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    if (normalMap) {
+      gl.uniform1i(gl.getUniformLocation(this.glProgram, "normalMap"), 1);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, normalMap);
+
+      this.setInt("useNormalMap", 1);
+    } else {
+      this.setInt("useNormalMap", 0);
+    }
+  }
+
+  _setMaterialLightProps(material, light = "default", lightStr = 1) {
     this.setFloat("diffuseFactor", material.diffuse);
-    gl.bindTexture(gl.TEXTURE_2D, material.texture); // TODO: is there a better way to switch between textures?
     this.setVector("specular", material.specular);
     this.setFloat("gloss", material.gloss);
     this.setFloatArray("texScale", material.texScale);
     this.setFloatArray("texWeight", material.texWeight);
     this.setVector("emissive", this.getLightColorStr(light, lightStr));
+  }
+
+  _setMaterial(name = "default", light = "default", lightStr = 1) {
+    if (this._current_material == name) return;
+
+    const material =
+      this.materials.find((t) => t.name === name) || this.materials[0];
+
+    this._setMaterialTextures(material);
+    this._setMaterialLightProps(material, light, lightStr);
 
     this._current_material = name;
   }
@@ -201,6 +227,17 @@ export class WebGL {
       ...[gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA],
       gl.UNSIGNED_BYTE,
       image
+    );
+    gl.generateMipmap(gl.TEXTURE_2D);
+
+    if (!material.normalSrc) return;
+    const normalImage = await loadImage(material.normalSrc);
+    material.normalMap = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, material.normalMap);
+    gl.texImage2D(
+      ...[gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA],
+      gl.UNSIGNED_BYTE,
+      normalImage
     );
     gl.generateMipmap(gl.TEXTURE_2D);
   }
@@ -316,15 +353,22 @@ export class WebGL {
   };
 
   drawFromBuffersObject = (buffers, mode) => {
-    const { pointsBuffer, normalsBuffer, idxBuffer, uvBuffer } = buffers;
-
-    if (!uvBuffer) console.log("no uv buffer");
+    const {
+      pointsBuffer,
+      normalsBuffer,
+      tangentsBuffer,
+      biNormalsBuffer,
+      idxBuffer,
+      uvBuffer,
+    } = buffers;
 
     const gl = this.gl;
     const nvp = idxBuffer.number_vertex_point;
 
     this.setWglAtt("aVertexPosition", pointsBuffer, 3);
     this.setWglAtt("aVertexNormal", normalsBuffer, 3);
+    this.setWglAtt("aVertexTangent", tangentsBuffer, 3);
+    this.setWglAtt("aVertexBiNormal", biNormalsBuffer, 3);
     this.setWglAtt("aVertexUV", uvBuffer, 2);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, idxBuffer);

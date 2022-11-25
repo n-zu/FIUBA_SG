@@ -7,10 +7,13 @@ uniform float texWeight[2];
 
 uniform vec3 ambient;
 uniform float diffuseFactor;
-uniform sampler2D texture;
 uniform vec3 specular;
 uniform float gloss;
 uniform vec3 emissive;
+
+uniform sampler2D texture;
+uniform bool useNormalMap;
+uniform sampler2D normalMap;
 
 uniform vec3 directionalLightDir;// reversed
 uniform vec3 directionalLightColor;
@@ -25,8 +28,10 @@ const float quadraticDecay = 0.5;
 
 uniform vec3 cameraPosition;
 
-varying vec3 vNormal;
 varying vec3 vPosWorld;
+varying vec3 vNormal;
+varying vec3 vTangent;
+varying vec3 vBiNormal;
 varying vec2 vUV;
 
 float lambert( vec3 normal, vec3 lightDir ){
@@ -46,6 +51,26 @@ float emissiveFactor( vec3 normal, vec3 viewDir ){
     return max( dot( normal, viewDir ), 0.0 ) +0.5;
 }
 
+vec3 texPoint( sampler2D tex) {
+  vec3 tex1 = texture2D(tex, vUV*1.00).xyz;
+    vec3 tex2 = texture2D(tex, vUV*texScale[0]).xyz;
+    vec3 tex3 = texture2D(tex, vUV*texScale[1]).xyz;
+    vec3 tex4 = mix(tex1, tex2, texWeight[0]);
+    vec3 tex5 = mix(tex4, tex3, texWeight[1]) ;
+    return tex5;
+}
+
+vec3 getNormal(){
+    if (useNormalMap) {
+        vec3 normal = texPoint(normalMap);
+        normal = normalize(normal * 2.0 - 1.0);
+        normal = normalize(normal.x * vTangent + normal.y * vBiNormal + normal.z * vNormal);
+        return normal;
+    } else {
+        return vNormal;
+    }
+}
+
 void main(void) {
 
 
@@ -53,23 +78,20 @@ void main(void) {
     
     vec3 viewDir = normalize( cameraPosition - vPosWorld );
 
-    vec3 tex1 = texture2D(texture, vUV*1.00).xyz;
-    vec3 tex2 = texture2D(texture, vUV*texScale[0]).xyz;
-    vec3 tex3 = texture2D(texture, vUV*texScale[1]).xyz;
-    vec3 tex4 = mix(tex1, tex2, texWeight[0]);
-    vec3 tex5 = mix(tex4, tex3, texWeight[1]) ;
+    vec3 tex = texPoint(texture);
+    vec3 normalVec = getNormal();
 
 
-    vec3 ambientColor = tex5 * ambient;
+    vec3 ambientColor = tex * ambient;
     vec3 diffuseColor = vec3(0.0, 0.0, 0.0);
     vec3 specularColor = vec3(0.0, 0.0, 0.0);
 
     {
       vec3 lightDir = normalize(directionalLightDir);
-      float lambert = lambert( vNormal, lightDir );
+      float lambert = lambert( normalVec, lightDir );
       diffuseColor += lambert * directionalLightColor;
       
-      float specularFactor = specularFactor( vNormal, lightDir, viewDir );
+      float specularFactor = specularFactor( normalVec, lightDir, viewDir );
       specularColor += specularFactor * directionalLightColor;
     }
 
@@ -77,17 +99,17 @@ void main(void) {
       if ( i >= numPointLights ) break;
       vec3 lightDir = pointLightPos[i] - vPosWorld;
       float decay = decay( length( lightDir ) );
-      float lambert = lambert( vNormal,  normalize(lightDir) );
+      float lambert = lambert( normalVec,  normalize(lightDir) );
       diffuseColor += pointLightColor[i] * lambert * decay;
 
-      float specularFactor = specularFactor( vNormal, normalize(lightDir), viewDir );
+      float specularFactor = specularFactor( normalVec, normalize(lightDir), viewDir );
       specularColor += specularFactor * pointLightColor[i] * decay;
     }
 
-    diffuseColor *= tex5 * diffuseFactor;
+    diffuseColor *= tex * diffuseFactor;
     specularColor *= specular;
 
-    vec3 emissiveColor = emissive * emissiveFactor( vNormal, viewDir );
+    vec3 emissiveColor = emissive * emissiveFactor( normalVec, viewDir );
 
     vec3 color = ambientColor + diffuseColor + specularColor + emissiveColor;
 
