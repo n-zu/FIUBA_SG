@@ -1,0 +1,19 @@
+@import url("https://webglfundamentals.org/webgl/resources/webgl-tutorials.css");
+body {
+  margin: 0;
+}
+canvas {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
+
+#sourcecode {
+  height: 1.5rem;
+  text-align: center;
+  background-color: #0005;
+  padding: 0.2rem;
+}
+#sourcecode a {
+  color: #ddf;
+}
