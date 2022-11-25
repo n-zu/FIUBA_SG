@@ -21,7 +21,7 @@ var settings = {
 
   color: {
     wall: "stone_wall",
-    stone: "stone",
+    stone: "stone_wall",
     wood: "wood",
     dark_wood: "dark_wood",
     grass: "grass",

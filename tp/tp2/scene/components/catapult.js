@@ -252,7 +252,7 @@ const setupWeight = (wgl) => {
     [Transform.translate([-0.15, 0, 0])]
   );
 
-  const cube = new Cube().setupBuffers(wgl, [1, 10], [0.5, 0.5]);
+  const cube = new Cube().setupBuffers(wgl, [1, 5], [0.5, 0.2]);
   const weight = new Mesh(
     ["weight", cube, color.stone],
     [

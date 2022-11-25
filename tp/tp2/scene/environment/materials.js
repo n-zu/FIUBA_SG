@@ -20,33 +20,39 @@ const materials = [
     ...materialTemplate,
     name: "stone_wall",
     src: "assets/textures/stone_wall/diffuse.jpg",
+    normalSrc: "assets/textures/stone_wall/normals.jpg",
   },
   {
     ...materialTemplate,
     name: "wood",
     src: "assets/textures/wood/diffuse.jpg",
+    normalSrc: "assets/textures/wood/normals.jpg",
   },
   {
     ...materialTemplate,
     name: "dark_wood",
     src: "assets/textures/wood/dark_wood.jpg",
+    normalSrc: "assets/textures/wood/dark_normals.jpg",
   },
   {
     ...materialTemplate,
     name: "grass",
     src: "assets/textures/grass/diffuse.png",
+    normalSrc: "assets/textures/grass/normals.png",
   },
   {
     ...materialTemplate,
     name: "water",
     src: "assets/textures/water/diffuse.jpg",
+    normalSrc: "assets/textures/water/normals.jpg",
     specular: v3(2),
     gloss: 60,
   },
   {
     ...materialTemplate,
     name: "castle",
-    src: "assets/textures/castle/diffuse.jpeg",
+    src: "assets/textures/castle/diffuse.jpg",
+    normalSrc: "assets/textures/castle/normals.jpg",
   },
   {
     ...materialTemplate,
@@ -58,15 +64,11 @@ const materials = [
   {
     ...materialTemplate,
     name: "roof",
-    src: "assets/textures/roof/diffuse2.png",
+    src: "assets/textures/roof/diffuse.png",
+    normalSrc: "assets/textures/roof/normals.jpg",
     specular: v3(1),
     gloss: 30,
     diffuse: 1.5,
-  },
-  {
-    ...materialTemplate,
-    name: "stone",
-    src: "assets/textures/stone/diffuse.jpg",
   },
   {
     ...materialTemplate,
