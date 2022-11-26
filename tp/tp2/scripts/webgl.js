@@ -28,7 +28,9 @@ export const setup = (gl, canvas) => {
   gl.viewport(0, 0, canvas.width, canvas.height);
 };
 
-export const setupMatrices = (gl, canvas, glProgram) => {
+export const setupMatrices = (wgl, canvas, glProgram) => {
+  const { gl } = wgl;
+
   let modelMatrix = mx.mat();
   let viewMatrix = mx.mat();
   let projMatrix = mx.mat();
@@ -45,6 +47,22 @@ export const setupMatrices = (gl, canvas, glProgram) => {
   gl.uniformMatrix4fv(viewMatrixUniform, false, viewMatrix);
   gl.uniformMatrix4fv(projMatrixUniform, false, projMatrix);
   gl.uniformMatrix4fv(normalMatrixUniform, false, normalMatrix);
+
+  wgl.modelMatrix = modelMatrix;
+  wgl.viewMatrix = viewMatrix;
+  wgl.projMatrix = projMatrix;
+  wgl.normalMatrix = normalMatrix;
+};
+
+const viewDirectionProjectionInverseMatrix = (wgl) => {
+  const { viewMatrix, projMatrix } = wgl;
+
+  const viewDirectionProjectionMatrix = m4.multiply(viewMatrix, projMatrix);
+  const viewDirectionProjectionInverseMatrix = m4.inverse(
+    viewDirectionProjectionMatrix
+  );
+
+  return viewDirectionProjectionInverseMatrix;
 };
 
 export const makeShader = (gl, src, type) => {
@@ -96,36 +114,15 @@ export const initShaders = async (
 export const initSkyBoxShaders = async (wgl, skybox_dir) => {
   if (!skybox_dir) return;
 
-  const { gl, canvas } = wgl;
+  const { gl } = wgl;
 
-  const vertexSrc = `
-  attribute vec4 a_position;
-  varying vec4 v_position;
-  void main() {
-    v_position = a_position;
-    gl_Position = vec4(a_position.xy, 1, 1);
-  }
-  `;
-  const fragmentSrc = `
-  precision mediump float;
-  uniform samplerCube u_skybox;
-  uniform mat4 u_viewDirectionProjectionInverse;
-  varying vec4 v_position;
-  void main() {
-    vec4 t = u_viewDirectionProjectionInverse * v_position;
-    gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w));
-  }
-  `;
-  const vertexShader = makeShader(gl, vertexSrc, gl.VERTEX_SHADER);
-  const fragmentShader = makeShader(gl, fragmentSrc, gl.FRAGMENT_SHADER);
-  const glProgram = gl.createProgram();
-  gl.attachShader(glProgram, vertexShader);
-  gl.attachShader(glProgram, fragmentShader);
-  gl.linkProgram(glProgram);
-  if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS))
-    throw new Error("Could not initialize shaders");
+  wgl.skyboxProgramInfo = webglUtils.createProgramInfo(gl, [
+    "skybox-vertex-shader",
+    "skybox-fragment-shader",
+  ]);
+  wgl.quadBufferInfo = primitives.createXYQuadBufferInfo(gl);
 
-  //const skybox = loadCubeMap(gl, skybox_dir);
+  wgl.skyBox = loadCubeMap(gl, skybox_dir, 1024);
 };
 
 export const loadCubeMap = (gl, basePath, dim) => {
@@ -204,7 +201,7 @@ export class WebGL {
   async init(vertex_file, shader_file, skybox_dir, materials, lights) {
     this.glProgram = await initShaders(this.gl, vertex_file, shader_file);
     this.skyBoxProgram = await initSkyBoxShaders(this, skybox_dir);
-    setupMatrices(this.gl, this.canvas, this.glProgram);
+    setupMatrices(this, this.canvas, this.glProgram);
     this.clear();
     this.initMaterials(this.gl, materials);
     this.setLights(lights);
@@ -244,20 +241,17 @@ export class WebGL {
   setCamera(position, viewMatrix) {
     this.setVector("cameraPosition", position);
     this.setMatrix("viewMatrix", viewMatrix);
+    this.viewMatrix = viewMatrix;
     return this;
   }
 
   setModelMatrix(modelMatrix) {
     this.setMatrix("modelMatrix", modelMatrix);
+    this.modelMatrix = modelMatrix;
 
-    // FIXME:
-    // Translations are removed
-    // But scalings are not
-    // I think normalizing this in the shader is ok
-    // But I'm not sure
-    // Check the class / asks prof
     const normalMatrix = [...modelMatrix.slice(0, 4 * 3), 0, 0, 0, 1];
     this.setMatrix("normalMatrix", normalMatrix);
+    this.normalMatrix = normalMatrix;
 
     return this;
   }
@@ -565,6 +559,19 @@ export class WebGL {
   };
 
   drawSkyBox = () => {
-    // TODO
+    const { gl, skyboxProgramInfo, quadBufferInfo } = this;
+    gl.depthFunc(gl.LEQUAL);
+
+    gl.useProgram(skyboxProgramInfo.program);
+    webglUtils.setBuffersAndAttributes(gl, skyboxProgramInfo, quadBufferInfo);
+    webglUtils.setUniforms(skyboxProgramInfo, {
+      u_viewDirectionProjectionInverse:
+        viewDirectionProjectionInverseMatrix(this),
+      u_skybox: this.skyBox,
+    });
+    webglUtils.drawBufferInfo(gl, quadBufferInfo);
+
+    gl.depthFunc(gl.LESS);
+    gl.useProgram(this.glProgram);
   };
 }

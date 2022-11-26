@@ -74,6 +74,7 @@ const drawScene = (t) => {
   scene.setup(wgl, lights);
   setLights(lights);
   scene._draw(wgl);
+  wgl.drawSkyBox();
 };
 
 const tick = (t) => {

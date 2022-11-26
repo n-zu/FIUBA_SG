@@ -125,7 +125,7 @@ const Terrain = (wgl, t) => {
 
   const { center, bridge, floor } = glob_geometry;
   const water = getWater(t);
-  const sky = getSky(t);
+  const sky = null && getSky(t);
 
   const terrain = new Mesh(["Terrain"], null, [
     center,
