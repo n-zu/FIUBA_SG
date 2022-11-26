@@ -93,6 +93,97 @@ export const initShaders = async (
   return glProgram;
 };
 
+export const initSkyBoxShaders = async (wgl, skybox_dir) => {
+  if (!skybox_dir) return;
+
+  const { gl, canvas } = wgl;
+
+  const vertexSrc = `
+  attribute vec4 a_position;
+  varying vec4 v_position;
+  void main() {
+    v_position = a_position;
+    gl_Position = vec4(a_position.xy, 1, 1);
+  }
+  `;
+  const fragmentSrc = `
+  precision mediump float;
+  uniform samplerCube u_skybox;
+  uniform mat4 u_viewDirectionProjectionInverse;
+  varying vec4 v_position;
+  void main() {
+    vec4 t = u_viewDirectionProjectionInverse * v_position;
+    gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w));
+  }
+  `;
+  const vertexShader = makeShader(gl, vertexSrc, gl.VERTEX_SHADER);
+  const fragmentShader = makeShader(gl, fragmentSrc, gl.FRAGMENT_SHADER);
+  const glProgram = gl.createProgram();
+  gl.attachShader(glProgram, vertexShader);
+  gl.attachShader(glProgram, fragmentShader);
+  gl.linkProgram(glProgram);
+  if (!gl.getProgramParameter(glProgram, gl.LINK_STATUS))
+    throw new Error("Could not initialize shaders");
+
+  //const skybox = loadCubeMap(gl, skybox_dir);
+};
+
+export const loadCubeMap = (gl, basePath, dim) => {
+  const faces = [
+    {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+      file: "pz.png",
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+      file: "py.png",
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+      file: "px.png",
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+      file: "nx.png",
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+      file: "ny.png",
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+      file: "nz.png",
+    },
+  ];
+  const cubeMap = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
+
+  faces.forEach(async (faceInfo) => {
+    const { target, file } = faceInfo;
+
+    // setup each face so it's immediately renderable
+    gl.texImage2D(
+      ...[target, 0, gl.RGBA],
+      ...[dim, dim, 0, gl.RGBA],
+      gl.UNSIGNED_BYTE,
+      null
+    );
+
+    const image = await loadImage(`${basePath}/${file}`);
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
+    gl.texImage2D(target, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+  });
+  gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+  gl.texParameteri(
+    gl.TEXTURE_CUBE_MAP,
+    gl.TEXTURE_MIN_FILTER,
+    gl.LINEAR_MIPMAP_LINEAR
+  );
+
+  return cubeMap;
+};
+
 export class WebGL {
   constructor(canvasSelector) {
     this.canvas = document.querySelector(canvasSelector);
@@ -110,8 +201,9 @@ export class WebGL {
     setup(this.gl, this.canvas);
   }
 
-  async init(vertex_file, shader_file, materials, lights) {
+  async init(vertex_file, shader_file, skybox_dir, materials, lights) {
     this.glProgram = await initShaders(this.gl, vertex_file, shader_file);
+    this.skyBoxProgram = await initSkyBoxShaders(this, skybox_dir);
     setupMatrices(this.gl, this.canvas, this.glProgram);
     this.clear();
     this.initMaterials(this.gl, materials);
@@ -235,60 +327,7 @@ export class WebGL {
   loadCubeMap(gl, material) {
     const basePath = material?.cubeMapSettings?.src;
     const dim = material?.cubeMapSettings?.size ?? 256;
-
-    const faces = [
-      {
-        target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
-        file: "pz.png",
-      },
-      {
-        target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-        file: "py.png",
-      },
-      {
-        target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
-        file: "px.png",
-      },
-      {
-        target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-        file: "nx.png",
-      },
-      {
-        target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-        file: "ny.png",
-      },
-      {
-        target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
-        file: "nz.png",
-      },
-    ];
-
-    const cubeMap = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
-
-    faces.forEach(async (faceInfo) => {
-      const { target, file } = faceInfo;
-
-      // setup each face so it's immediately renderable
-      gl.texImage2D(
-        ...[target, 0, gl.RGBA],
-        ...[dim, dim, 0, gl.RGBA],
-        gl.UNSIGNED_BYTE,
-        null
-      );
-
-      const image = await loadImage(`${basePath}/${file}`);
-      gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
-      gl.texImage2D(target, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-      gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
-    });
-    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
-    gl.texParameteri(
-      gl.TEXTURE_CUBE_MAP,
-      gl.TEXTURE_MIN_FILTER,
-      gl.LINEAR_MIPMAP_LINEAR
-    );
-    material.cubeMap = cubeMap;
+    material.cubeMap = loadCubeMap(gl, basePath, dim);
   }
 
   async loadTexture(gl, material) {
@@ -523,5 +562,9 @@ export class WebGL {
     mx.scaleVec(dir2, len);
     const p2 = mx.add(p, dir2);
     this.drawLine(p, p2, normals);
+  };
+
+  drawSkyBox = () => {
+    // TODO
   };
 }
