@@ -57,7 +57,14 @@ export const setupMatrices = (wgl, canvas, glProgram) => {
 const viewDirectionProjectionInverseMatrix = (wgl) => {
   const { viewMatrix, projMatrix } = wgl;
 
-  const viewDirectionProjectionMatrix = m4.multiply(viewMatrix, projMatrix);
+  const viewDirectionMatrix = m4.copy(viewMatrix);
+  viewDirectionMatrix[12] = 0;
+  viewDirectionMatrix[13] = 0;
+  viewDirectionMatrix[14] = 0;
+  const viewDirectionProjectionMatrix = m4.multiply(
+    projMatrix,
+    viewDirectionMatrix
+  );
   const viewDirectionProjectionInverseMatrix = m4.inverse(
     viewDirectionProjectionMatrix
   );
