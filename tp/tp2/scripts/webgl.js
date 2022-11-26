@@ -173,25 +173,34 @@ export class WebGL {
   _setMaterialTextures(material) {
     const gl = this.gl;
 
-    const { texture, normalMap } = material;
+    const { texture, normalMap, cubeMap, cubeMapMode, cubeMapStr } = material;
 
-    if (!texture) return;
-
-    // Bind texture to texture unit 0
+    const _texture = texture ?? this.baseTex;
 
     gl.uniform1i(gl.getUniformLocation(this.glProgram, "texture"), 0);
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.bindTexture(gl.TEXTURE_2D, _texture);
+
+    const _normalMap = normalMap ?? this.baseTex;
+
+    gl.uniform1i(gl.getUniformLocation(this.glProgram, "normalMap"), 1);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, _normalMap);
 
     if (normalMap) {
-      gl.uniform1i(gl.getUniformLocation(this.glProgram, "normalMap"), 1);
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, normalMap);
-
       this.setInt("useNormalMap", 1);
     } else {
       this.setInt("useNormalMap", 0);
     }
+
+    // bind cube map
+    const _cubeMap = cubeMap ?? this.baseCubeMap;
+    gl.uniform1i(gl.getUniformLocation(this.glProgram, "cubeMap"), 2);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, _cubeMap);
+
+    this.setInt("cubeMapMode", cubeMapMode ?? 0);
+    this.setFloat("cubeMapStr", cubeMapStr ?? 0.3);
   }
 
   _setMaterialLightProps(material, light = "default", lightStr = 1) {
@@ -219,6 +228,64 @@ export class WebGL {
     this._setMaterial(name, light, lightStr);
   }
 
+  loadCubeMap(gl, material) {
+    const basePath = material.cubeMapSrc;
+    const faces = [
+      {
+        target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+        file: "pz.png",
+      },
+      {
+        target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+        file: "py.png",
+      },
+      {
+        target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+        file: "px.png",
+      },
+      {
+        target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+        file: "nx.png",
+      },
+      {
+        target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+        file: "ny.png",
+      },
+      {
+        target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+        file: "nz.png",
+      },
+    ];
+
+    const cubeMap = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
+
+    faces.forEach(async (faceInfo) => {
+      const { target, file } = faceInfo;
+      const dim = 256;
+
+      // setup each face so it's immediately renderable
+      gl.texImage2D(
+        ...[target, 0, gl.RGBA],
+        ...[dim, dim, 0, gl.RGBA],
+        gl.UNSIGNED_BYTE,
+        null
+      );
+
+      const image = await loadImage(`${basePath}/${file}`);
+      gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
+      gl.texImage2D(target, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+    });
+    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+    gl.texParameteri(
+      gl.TEXTURE_CUBE_MAP,
+      gl.TEXTURE_MIN_FILTER,
+      gl.LINEAR_MIPMAP_LINEAR
+    );
+    material.cubeMap = cubeMap;
+  }
+
   async loadTexture(gl, material) {
     if (!material.src || !material.texture) return;
     const image = await loadImage(material.src);
@@ -230,19 +297,61 @@ export class WebGL {
     );
     gl.generateMipmap(gl.TEXTURE_2D);
 
-    if (!material.normalSrc) return;
-    const normalImage = await loadImage(material.normalSrc);
-    material.normalMap = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, material.normalMap);
+    if (material.normalSrc) {
+      const normalImage = await loadImage(material.normalSrc);
+      material.normalMap = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, material.normalMap);
+      gl.texImage2D(
+        ...[gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA],
+        gl.UNSIGNED_BYTE,
+        normalImage
+      );
+      gl.generateMipmap(gl.TEXTURE_2D);
+    }
+
+    if (material.cubeMapSrc) {
+      this.loadCubeMap(gl, material);
+    }
+  }
+
+  loadBaseTexture(gl) {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.texImage2D(
-      ...[gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA],
+      ...[gl.TEXTURE_2D, 0, gl.RGBA],
+      ...[1, 1, 0, gl.RGBA],
       gl.UNSIGNED_BYTE,
-      normalImage
+      new Uint8Array([0, 0, 0, 0])
     );
-    gl.generateMipmap(gl.TEXTURE_2D);
+    this.baseTex = tex;
+  }
+
+  loadBaseCubeMap(gl) {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, tex);
+    const targets = [
+      gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+      gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+      gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+      gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+      gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+      gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+    ];
+    targets.forEach((target) => {
+      gl.texImage2D(
+        ...[target, 0, gl.RGBA],
+        ...[1, 1, 0, gl.RGBA],
+        gl.UNSIGNED_BYTE,
+        new Uint8Array([0, 0, 0, 0])
+      );
+    });
+    this.baseCubeMap = tex;
   }
 
   initMaterials(gl, materials = defaultMaterials) {
+    this.loadBaseTexture(gl);
+    this.loadBaseCubeMap(gl);
+
     this.materials = materials.map((material) => {
       const texture = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, texture);

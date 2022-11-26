@@ -14,6 +14,9 @@ uniform vec3 emissive;
 uniform sampler2D texture;
 uniform bool useNormalMap;
 uniform sampler2D normalMap;
+uniform int cubeMapMode;
+uniform float cubeMapStr;
+uniform samplerCube cubeMap;
 
 uniform vec3 directionalLightDir;// reversed
 uniform vec3 directionalLightColor;
@@ -61,14 +64,35 @@ vec3 texPoint( sampler2D tex) {
 }
 
 vec3 getNormal(){
-    if (useNormalMap) {
-        vec3 normal = texPoint(normalMap);
-        normal = normalize(normal * 2.0 - 1.0);
-        normal = normalize(normal.x * vTangent + normal.y * vBiNormal + normal.z * vNormal);
-        return normal;
-    } else {
-        return vNormal;
-    }
+  if (useNormalMap) {
+    vec3 normal = texPoint(normalMap);
+    normal = normalize(normal * 2.0 - 1.0);
+    normal = normalize(normal.x * vTangent + normal.y * vBiNormal + normal.z * vNormal);
+    return normal;
+  } else {
+    return vNormal;
+  }
+}
+
+vec3 cubeMapInput( vec3 normal ){
+
+  if( cubeMapMode == 0 ){
+    return vec3( 0.0, 0.0, 0.0 );
+  }
+
+  vec3 eyeToSurfaceDir = normalize(vPosWorld - cameraPosition);
+
+  if(cubeMapMode == 1){ // Exterior
+    vec3 direction = reflect(eyeToSurfaceDir,normal);
+    return textureCube(cubeMap, direction).xyz;
+  }
+
+  if(cubeMapMode == 2){ // Interior
+    // this does not work
+    // i might need object info to show the whole room
+    return textureCube(cubeMap, eyeToSurfaceDir).xyz;
+  }
+
 }
 
 void main(void) {
@@ -81,11 +105,11 @@ void main(void) {
     vec3 tex = texPoint(texture);
     vec3 normalVec = getNormal();
 
-
     vec3 ambientColor = tex * ambient;
     vec3 diffuseColor = vec3(0.0, 0.0, 0.0);
     vec3 specularColor = vec3(0.0, 0.0, 0.0);
 
+    // directional light
     {
       vec3 lightDir = normalize(directionalLightDir);
       float lambert = lambert( normalVec, lightDir );
@@ -95,6 +119,7 @@ void main(void) {
       specularColor += specularFactor * directionalLightColor;
     }
 
+    // point lights
     for ( int i = 0; i < MAX_POINT_LIGHTS; i++ ) {
       if ( i >= numPointLights ) break;
       vec3 lightDir = pointLightPos[i] - vPosWorld;
@@ -112,6 +137,7 @@ void main(void) {
     vec3 emissiveColor = emissive * emissiveFactor( normalVec, viewDir );
 
     vec3 color = ambientColor + diffuseColor + specularColor + emissiveColor;
+    color += cubeMapInput(normalVec)*cubeMapStr;
 
     gl_FragColor = vec4(color, 1.0);
 

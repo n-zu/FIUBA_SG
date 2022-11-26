@@ -10,6 +10,12 @@ const materialTemplate = {
   texWeight: [0.4, 0.2],
 };
 
+const cubeMapMode = {
+  none: 0,
+  exterior: 1,
+  interior: 2,
+};
+
 const materials = [
   {
     ...materialTemplate,
@@ -44,7 +50,9 @@ const materials = [
     ...materialTemplate,
     name: "water",
     src: "assets/textures/water/diffuse.jpg",
-    normalSrc: "assets/textures/water/normals.jpg",
+    //normalSrc: "assets/textures/water/normals.jpg",
+    cubeMapSrc: "assets/cubemaps/outside",
+    cubeMapMode: cubeMapMode.exterior,
     specular: v3(2),
     gloss: 60,
   },
@@ -58,6 +66,8 @@ const materials = [
     ...materialTemplate,
     name: "window",
     src: "assets/textures/window/diffuse.jpg",
+    //cubeMapSrc: "assets/cubemaps/inside",
+    // cubeMapMode: cubeMapMode.interior,
     specular: v3(2),
     gloss: 20,
   },
