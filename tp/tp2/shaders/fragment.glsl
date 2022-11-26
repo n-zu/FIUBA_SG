@@ -14,8 +14,10 @@ uniform vec3 emissive;
 uniform sampler2D texture;
 uniform bool useNormalMap;
 uniform sampler2D normalMap;
+
 uniform int cubeMapMode;
 uniform float cubeMapStr;
+uniform float cubeMapNormalCorrection;
 uniform samplerCube cubeMap;
 
 uniform vec3 directionalLightDir;// reversed
@@ -81,9 +83,10 @@ vec3 cubeMapInput( vec3 normal ){
   }
 
   vec3 eyeToSurfaceDir = normalize(vPosWorld - cameraPosition);
+  vec3 adjustedNormal = mix( normal, vNormal, cubeMapNormalCorrection );
 
   if(cubeMapMode == 1){ // Exterior
-    vec3 direction = reflect(eyeToSurfaceDir,normal);
+    vec3 direction = reflect(eyeToSurfaceDir,adjustedNormal);
     return textureCube(cubeMap, direction).xyz;
   }
 
@@ -137,7 +140,7 @@ void main(void) {
     vec3 emissiveColor = emissive * emissiveFactor( normalVec, viewDir );
 
     vec3 color = ambientColor + diffuseColor + specularColor + emissiveColor;
-    color += cubeMapInput(normalVec)*cubeMapStr;
+    color += cubeMapInput(normalVec)*cubeMapStr*ambient;
 
     gl_FragColor = vec4(color, 1.0);
 

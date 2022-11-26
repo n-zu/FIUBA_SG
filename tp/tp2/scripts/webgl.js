@@ -173,7 +173,7 @@ export class WebGL {
   _setMaterialTextures(material) {
     const gl = this.gl;
 
-    const { texture, normalMap, cubeMap, cubeMapMode, cubeMapStr } = material;
+    const { texture, normalMap, cubeMap, cubeMapSettings } = material;
 
     const _texture = texture ?? this.baseTex;
 
@@ -195,12 +195,16 @@ export class WebGL {
 
     // bind cube map
     const _cubeMap = cubeMap ?? this.baseCubeMap;
+    const cubeMapMode = cubeMapSettings?.mode ?? 1;
+    const cubeMapStr = cubeMapSettings?.str ?? 1;
+    const cubeMapNormalCorrection = cubeMapSettings?.normalCorrection ?? 0;
     gl.uniform1i(gl.getUniformLocation(this.glProgram, "cubeMap"), 2);
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, _cubeMap);
 
-    this.setInt("cubeMapMode", cubeMapMode ?? 0);
-    this.setFloat("cubeMapStr", cubeMapStr ?? 0.3);
+    this.setInt("cubeMapMode", cubeMapMode);
+    this.setFloat("cubeMapStr", cubeMapStr);
+    this.setFloat("cubeMapNormalCorrection", cubeMapNormalCorrection);
   }
 
   _setMaterialLightProps(material, light = "default", lightStr = 1) {
@@ -229,7 +233,9 @@ export class WebGL {
   }
 
   loadCubeMap(gl, material) {
-    const basePath = material.cubeMapSrc;
+    const basePath = material?.cubeMapSettings?.src;
+    const dim = material?.cubeMapSettings?.size ?? 256;
+
     const faces = [
       {
         target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
@@ -262,7 +268,6 @@ export class WebGL {
 
     faces.forEach(async (faceInfo) => {
       const { target, file } = faceInfo;
-      const dim = 256;
 
       // setup each face so it's immediately renderable
       gl.texImage2D(
@@ -309,7 +314,7 @@ export class WebGL {
       gl.generateMipmap(gl.TEXTURE_2D);
     }
 
-    if (material.cubeMapSrc) {
+    if (material?.cubeMapSettings?.src) {
       this.loadCubeMap(gl, material);
     }
   }
