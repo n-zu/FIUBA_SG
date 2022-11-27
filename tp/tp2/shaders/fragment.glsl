@@ -91,9 +91,10 @@ vec3 cubeMapInput( vec3 normal ){
   }
 
   if(cubeMapMode == 2){ // Interior
-    // this does not work
-    // i might need object info to show the whole room
-    return textureCube(cubeMap, eyeToSurfaceDir).xyz;
+    // FIXME: This is harder to implement than i thought it'd be
+    // It wont be implemented for now
+    // https://www.proun-game.com/Oogst3D/CODING/InteriorMapping/InteriorMapping.pdf
+    return vec3( 0.0, 0.0, 0.0 );
   }
 
 }

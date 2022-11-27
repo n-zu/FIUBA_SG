@@ -560,7 +560,7 @@ export class WebGL {
     this.drawLine(p, p2, normals);
   };
 
-  drawSkyBox = () => {
+  drawSkyBox = (ambient = [1, 1, 1]) => {
     const { gl, skyboxProgramInfo, quadBufferInfo } = this;
     gl.depthFunc(gl.LEQUAL);
 
@@ -570,6 +570,7 @@ export class WebGL {
       u_viewDirectionProjectionInverse:
         viewDirectionProjectionInverseMatrix(this),
       u_skybox: this.skyBox,
+      u_ambient: ambient,
     });
     webglUtils.drawBufferInfo(gl, quadBufferInfo);
 
