@@ -73,5 +73,37 @@
         </div>
       </div>
     </section>
+    <script id="skybox-vertex-shader" type="x-shader/x-vertex">
+      attribute vec4 a_position;
+      varying vec4 v_position;
+      void main() {
+        v_position = a_position;
+        gl_Position = vec4(a_position.xy, 1, 1);
+      }
+    </script>
+    <script id="skybox-fragment-shader" type="x-shader/x-fragment">
+      precision mediump float;
+
+      uniform samplerCube u_skybox;
+      uniform mat4 u_viewDirectionProjectionInverse;
+      uniform vec3 u_ambient;
+
+      varying vec4 v_position;
+      void main() {
+        vec4 t = u_viewDirectionProjectionInverse * v_position;
+        vec4 ambient_mix = mix( vec4(u_ambient, 1), vec4(1,1,1,1), 0.5);
+        gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w)) * ambient_mix;
+      }
+    </script>
+    <!--
+    for most samples webgl-utils only provides shader compiling/linking and
+    canvas resizing because why clutter the examples with code that's the same in every sample.
+    See https://webglfundamentals.org/webgl/lessons/webgl-boilerplate.html
+    and https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html
+    for webgl-utils, m3, m4, and webgl-lessons-ui.
+    -->
+    <script src="https://webglfundamentals.org/webgl/resources/webgl-utils.js"></script>
+    <script src="https://webglfundamentals.org/webgl/resources/m4.js"></script>
+    <script src="https://webglfundamentals.org/webgl/resources/primitives.js"></script>
   </body>
 </html>

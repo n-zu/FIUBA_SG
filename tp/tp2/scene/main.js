@@ -12,6 +12,7 @@ import materials from "./environment/materials.js";
 const wgl = await new WebGL("#main").init(
   "./shaders/vertex.glsl",
   "./shaders/fragment.glsl",
+  "./assets/cubemaps/skybox",
   materials
 );
 wgl
@@ -73,6 +74,7 @@ const drawScene = (t) => {
   scene.setup(wgl, lights);
   setLights(lights);
   scene._draw(wgl);
+  wgl.drawSkyBox(settings.light.ambient.color);
 };
 
 const tick = (t) => {

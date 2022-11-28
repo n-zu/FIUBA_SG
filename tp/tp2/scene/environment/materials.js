@@ -13,7 +13,7 @@ const materialTemplate = {
 const cubeMapMode = {
   none: 0,
   exterior: 1,
-  interior: 2,
+  // interior: 2, // TODO: implement
 };
 
 const materials = [
@@ -51,9 +51,8 @@ const materials = [
     name: "water",
     src: "assets/textures/water/diffuse.jpg",
     normalSrc: "assets/textures/water/normals.jpg",
-    cubeMapSrc: "assets/cubemaps/sky",
     cubeMapSettings: {
-      src: "assets/cubemaps/sky",
+      src: "assets/cubemaps/env",
       size: 1024,
       mode: cubeMapMode.exterior,
       str: 1,
@@ -72,10 +71,14 @@ const materials = [
     ...materialTemplate,
     name: "window",
     src: "assets/textures/window/diffuse.jpg",
-    //cubeMapSrc: "assets/cubemaps/inside",
-    // cubeMapMode: cubeMapMode.interior,
-    specular: v3(2),
-    gloss: 20,
+    cubeMapSettings: {
+      src: "assets/cubemaps/env",
+      size: 1024,
+      mode: cubeMapMode.exterior,
+      str: 0.7,
+    },
+    specular: v3(0),
+    gloss: 10,
   },
   {
     ...materialTemplate,

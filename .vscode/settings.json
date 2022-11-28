@@ -1,4 +1,4 @@
 {
   "editor.formatOnSave": true,
-  "cSpell.words": ["Blinn", "cubemaps", "Phong", "webglfundamentals"]
+  "cSpell.words": ["Blinn", "cubemaps", "Phong", "skybox", "webglfundamentals"]
 }

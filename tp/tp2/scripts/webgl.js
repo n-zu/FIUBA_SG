@@ -28,7 +28,9 @@ export const setup = (gl, canvas) => {
   gl.viewport(0, 0, canvas.width, canvas.height);
 };
 
-export const setupMatrices = (gl, canvas, glProgram) => {
+export const setupMatrices = (wgl, canvas, glProgram) => {
+  const { gl } = wgl;
+
   let modelMatrix = mx.mat();
   let viewMatrix = mx.mat();
   let projMatrix = mx.mat();
@@ -45,6 +47,24 @@ export const setupMatrices = (gl, canvas, glProgram) => {
   gl.uniformMatrix4fv(viewMatrixUniform, false, viewMatrix);
   gl.uniformMatrix4fv(projMatrixUniform, false, projMatrix);
   gl.uniformMatrix4fv(normalMatrixUniform, false, normalMatrix);
+
+  wgl.modelMatrix = modelMatrix;
+  wgl.viewMatrix = viewMatrix;
+  wgl.projMatrix = projMatrix;
+  wgl.normalMatrix = normalMatrix;
+};
+
+const viewDirectionProjectionInverseMatrix = (wgl) => {
+  const { viewMatrix, projMatrix } = wgl;
+
+  const mat = [...viewMatrix];
+  mat[12] = 0;
+  mat[13] = 0;
+  mat[14] = 0;
+  mat4.mul(mat, projMatrix, mat);
+  mat4.invert(mat, mat);
+
+  return mat;
 };
 
 export const makeShader = (gl, src, type) => {
@@ -93,6 +113,76 @@ export const initShaders = async (
   return glProgram;
 };
 
+export const initSkyBoxShaders = async (wgl, skybox_dir) => {
+  if (!skybox_dir) return;
+
+  const { gl } = wgl;
+
+  wgl.skyboxProgramInfo = webglUtils.createProgramInfo(gl, [
+    "skybox-vertex-shader",
+    "skybox-fragment-shader",
+  ]);
+  wgl.quadBufferInfo = primitives.createXYQuadBufferInfo(gl);
+
+  wgl.skyBox = loadCubeMap(gl, skybox_dir, 1024);
+};
+
+export const loadCubeMap = (gl, basePath, dim) => {
+  const faces = [
+    {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+      file: "pz.png",
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+      file: "py.png",
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+      file: "px.png",
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+      file: "nx.png",
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+      file: "ny.png",
+    },
+    {
+      target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+      file: "nz.png",
+    },
+  ];
+  const cubeMap = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
+
+  faces.forEach(async (faceInfo) => {
+    const { target, file } = faceInfo;
+
+    // setup each face so it's immediately renderable
+    gl.texImage2D(
+      ...[target, 0, gl.RGBA],
+      ...[dim, dim, 0, gl.RGBA],
+      gl.UNSIGNED_BYTE,
+      null
+    );
+
+    const image = await loadImage(`${basePath}/${file}`);
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
+    gl.texImage2D(target, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+  });
+  gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+  gl.texParameteri(
+    gl.TEXTURE_CUBE_MAP,
+    gl.TEXTURE_MIN_FILTER,
+    gl.LINEAR_MIPMAP_LINEAR
+  );
+
+  return cubeMap;
+};
+
 export class WebGL {
   constructor(canvasSelector) {
     this.canvas = document.querySelector(canvasSelector);
@@ -110,9 +200,10 @@ export class WebGL {
     setup(this.gl, this.canvas);
   }
 
-  async init(vertex_file, shader_file, materials, lights) {
+  async init(vertex_file, shader_file, skybox_dir, materials, lights) {
     this.glProgram = await initShaders(this.gl, vertex_file, shader_file);
-    setupMatrices(this.gl, this.canvas, this.glProgram);
+    this.skyBoxProgram = await initSkyBoxShaders(this, skybox_dir);
+    setupMatrices(this, this.canvas, this.glProgram);
     this.clear();
     this.initMaterials(this.gl, materials);
     this.setLights(lights);
@@ -152,20 +243,17 @@ export class WebGL {
   setCamera(position, viewMatrix) {
     this.setVector("cameraPosition", position);
     this.setMatrix("viewMatrix", viewMatrix);
+    this.viewMatrix = viewMatrix;
     return this;
   }
 
   setModelMatrix(modelMatrix) {
     this.setMatrix("modelMatrix", modelMatrix);
+    this.modelMatrix = modelMatrix;
 
-    // FIXME:
-    // Translations are removed
-    // But scalings are not
-    // I think normalizing this in the shader is ok
-    // But I'm not sure
-    // Check the class / asks prof
     const normalMatrix = [...modelMatrix.slice(0, 4 * 3), 0, 0, 0, 1];
     this.setMatrix("normalMatrix", normalMatrix);
+    this.normalMatrix = normalMatrix;
 
     return this;
   }
@@ -235,60 +323,7 @@ export class WebGL {
   loadCubeMap(gl, material) {
     const basePath = material?.cubeMapSettings?.src;
     const dim = material?.cubeMapSettings?.size ?? 256;
-
-    const faces = [
-      {
-        target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
-        file: "pz.png",
-      },
-      {
-        target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-        file: "py.png",
-      },
-      {
-        target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
-        file: "px.png",
-      },
-      {
-        target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-        file: "nx.png",
-      },
-      {
-        target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-        file: "ny.png",
-      },
-      {
-        target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
-        file: "nz.png",
-      },
-    ];
-
-    const cubeMap = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
-
-    faces.forEach(async (faceInfo) => {
-      const { target, file } = faceInfo;
-
-      // setup each face so it's immediately renderable
-      gl.texImage2D(
-        ...[target, 0, gl.RGBA],
-        ...[dim, dim, 0, gl.RGBA],
-        gl.UNSIGNED_BYTE,
-        null
-      );
-
-      const image = await loadImage(`${basePath}/${file}`);
-      gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubeMap);
-      gl.texImage2D(target, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-      gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
-    });
-    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
-    gl.texParameteri(
-      gl.TEXTURE_CUBE_MAP,
-      gl.TEXTURE_MIN_FILTER,
-      gl.LINEAR_MIPMAP_LINEAR
-    );
-    material.cubeMap = cubeMap;
+    material.cubeMap = loadCubeMap(gl, basePath, dim);
   }
 
   async loadTexture(gl, material) {
@@ -523,5 +558,23 @@ export class WebGL {
     mx.scaleVec(dir2, len);
     const p2 = mx.add(p, dir2);
     this.drawLine(p, p2, normals);
+  };
+
+  drawSkyBox = (ambient = [1, 1, 1]) => {
+    const { gl, skyboxProgramInfo, quadBufferInfo } = this;
+    gl.depthFunc(gl.LEQUAL);
+
+    gl.useProgram(skyboxProgramInfo.program);
+    webglUtils.setBuffersAndAttributes(gl, skyboxProgramInfo, quadBufferInfo);
+    webglUtils.setUniforms(skyboxProgramInfo, {
+      u_viewDirectionProjectionInverse:
+        viewDirectionProjectionInverseMatrix(this),
+      u_skybox: this.skyBox,
+      u_ambient: ambient,
+    });
+    webglUtils.drawBufferInfo(gl, quadBufferInfo);
+
+    gl.depthFunc(gl.LESS);
+    gl.useProgram(this.glProgram);
   };
 }
