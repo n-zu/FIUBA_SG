@@ -59,6 +59,8 @@ export const mx = {
   dist: (a, b) => vec3.dist(a, b),
   angle: (a, b) => vec3.angle(a, b),
 
+  div: (a, b) => vec3.divide(vec3.create(), a, b),
+
   cross: (vec1, vec2) => vec3.cross(vec3.create(), vec1, vec2),
   dot: (vec1, vec2) => vec3.dot(vec1, vec2),
 

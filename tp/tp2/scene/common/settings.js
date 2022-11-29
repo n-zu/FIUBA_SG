@@ -41,4 +41,9 @@ var settings = {
     fire: { name: "fire", color: [0.46, 0.21, 0.11] },
     lamp: { name: "lamp", color: [0.5, 0.4, 0.3] },
   },
+
+  skybox: {
+    src: "./assets/cubemaps/skybox",
+    baseColor: [0.4, 0.5, 0.6],
+  },
 };

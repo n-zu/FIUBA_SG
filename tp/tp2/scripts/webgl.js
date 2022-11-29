@@ -113,7 +113,8 @@ export const initShaders = async (
   return glProgram;
 };
 
-export const initSkyBoxShaders = async (wgl, skybox_dir) => {
+export const initSkyBoxShaders = async (wgl, skybox_settings) => {
+  const skybox_dir = skybox_settings.src;
   if (!skybox_dir) return;
 
   const { gl } = wgl;
@@ -125,6 +126,7 @@ export const initSkyBoxShaders = async (wgl, skybox_dir) => {
   wgl.quadBufferInfo = primitives.createXYQuadBufferInfo(gl);
 
   wgl.skyBox = loadCubeMap(gl, skybox_dir, 1024);
+  wgl.skyBoxBaseColor = skybox_settings.baseColor || [0.5, 0.5, 0.5];
 };
 
 export const loadCubeMap = (gl, basePath, dim) => {
@@ -200,9 +202,9 @@ export class WebGL {
     setup(this.gl, this.canvas);
   }
 
-  async init(vertex_file, shader_file, skybox_dir, materials, lights) {
+  async init(vertex_file, shader_file, skybox_settings, materials, lights) {
     this.glProgram = await initShaders(this.gl, vertex_file, shader_file);
-    this.skyBoxProgram = await initSkyBoxShaders(this, skybox_dir);
+    this.skyBoxProgram = await initSkyBoxShaders(this, skybox_settings);
     setupMatrices(this, this.canvas, this.glProgram);
     this.clear();
     this.initMaterials(this.gl, materials);
@@ -286,6 +288,7 @@ export class WebGL {
     const cubeMapMode = cubeMapSettings?.mode ?? 1;
     const cubeMapStr = cubeMapSettings?.str ?? 1;
     const cubeMapNormalCorrection = cubeMapSettings?.normalCorrection ?? 0;
+    const cubeMapBaseColor = cubeMapSettings?.baseColor ?? [0.5, 0.5, 0.5];
     gl.uniform1i(gl.getUniformLocation(this.glProgram, "cubeMap"), 2);
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, _cubeMap);
@@ -293,6 +296,7 @@ export class WebGL {
     this.setInt("cubeMapMode", cubeMapMode);
     this.setFloat("cubeMapStr", cubeMapStr);
     this.setFloat("cubeMapNormalCorrection", cubeMapNormalCorrection);
+    this.setVector("cubeMapBaseColor", cubeMapBaseColor);
   }
 
   _setMaterialLightProps(material, light = "default", lightStr = 1) {
@@ -564,13 +568,15 @@ export class WebGL {
     const { gl, skyboxProgramInfo, quadBufferInfo } = this;
     gl.depthFunc(gl.LEQUAL);
 
+    const u_color = mx.div(ambient, this.skyBoxBaseColor);
+
     gl.useProgram(skyboxProgramInfo.program);
     webglUtils.setBuffersAndAttributes(gl, skyboxProgramInfo, quadBufferInfo);
     webglUtils.setUniforms(skyboxProgramInfo, {
       u_viewDirectionProjectionInverse:
         viewDirectionProjectionInverseMatrix(this),
       u_skybox: this.skyBox,
-      u_ambient: ambient,
+      u_color,
     });
     webglUtils.drawBufferInfo(gl, quadBufferInfo);
 

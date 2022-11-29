@@ -19,6 +19,7 @@ uniform int cubeMapMode;
 uniform float cubeMapStr;
 uniform float cubeMapNormalCorrection;
 uniform samplerCube cubeMap;
+uniform vec3 cubeMapBaseColor;
 
 uniform vec3 directionalLightDir;// reversed
 uniform vec3 directionalLightColor;
@@ -141,7 +142,7 @@ void main(void) {
     vec3 emissiveColor = emissive * emissiveFactor( normalVec, viewDir );
 
     vec3 color = ambientColor + diffuseColor + specularColor + emissiveColor;
-    color += cubeMapInput(normalVec)*cubeMapStr*ambient;
+    color += cubeMapInput(normalVec)*cubeMapStr*ambient/cubeMapBaseColor;
 
     gl_FragColor = vec4(color, 1.0);
 

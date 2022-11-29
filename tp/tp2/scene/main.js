@@ -12,7 +12,7 @@ import materials from "./environment/materials.js";
 const wgl = await new WebGL("#main").init(
   "./shaders/vertex.glsl",
   "./shaders/fragment.glsl",
-  "./assets/cubemaps/skybox",
+  settings.skybox,
   materials
 );
 wgl

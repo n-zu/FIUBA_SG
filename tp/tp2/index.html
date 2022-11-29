@@ -86,13 +86,12 @@
 
       uniform samplerCube u_skybox;
       uniform mat4 u_viewDirectionProjectionInverse;
-      uniform vec3 u_ambient;
+      uniform vec3 u_color;
 
       varying vec4 v_position;
       void main() {
         vec4 t = u_viewDirectionProjectionInverse * v_position;
-        vec4 ambient_mix = mix( vec4(u_ambient, 1), vec4(1,1,1,1), 0.5);
-        gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w)) * ambient_mix;
+        gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w)) * vec4(u_color, 1);
       }
     </script>
     <!--
