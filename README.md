@@ -18,6 +18,8 @@
 
 - [TP1](https://n-zu.github.io/FIUBA_SG/tp/tp1/)
 - [TP1 - Demos](https://n-zu.github.io/FIUBA_SG/tp/tp1/demo/)
+- [TP2](https://n-zu.github.io/FIUBA_SG/tp/tp2/)
+- [TP2 - Demos](https://n-zu.github.io/FIUBA_SG/tp/tp2/demo/)
 
 ## Recursos
 
