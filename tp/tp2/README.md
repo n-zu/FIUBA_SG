@@ -29,3 +29,8 @@ Dependencies: `glMatrix`
     - Physical setting: Diffuse, Gloss and Specular. Parameters of the Phong Model.
   - Light color and strength: Parameters for objects that emmit light
   - Children: A list of other 3D objects, that are positioned relative to this one. This allows us to create a root-scene object, that all other objects are child of; aswell as complex objects or systems, which are composed of multiple parts.
+ 
+## Shaders
+
+- `vertex.glsl`: Sets buffer vertices in the world, appliying camera transformations. Sets position, normal, tangent, binormal and UV.
+- `fragment.glsl`: Implements Blinn-Phong model. Defines lights, colors and textures.
